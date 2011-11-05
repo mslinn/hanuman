@@ -105,10 +105,10 @@ trait HanumanService extends BlueEyesServiceBuilder
     val simulation = simulationStatus.getSimulation(simulationID)
     Future.sync(HttpResponse(
       /*headers = HttpHeaders.Empty + sessionCookie(simulationID),*/
-      content = Some(if (simulation==None)
+      content = Some(if (simulation==None) {
         "Simulation with ID " + simulationID + " does not exist"
-      else
-        doCommand(operation, simulationID)
+      } else
+        doCommand(log, operation, simulationID)
     )))
   }
 
@@ -126,7 +126,7 @@ trait HanumanService extends BlueEyesServiceBuilder
     )
   }
 
-  private def doCommand(command:String, simulationID:String):String = {
+  private def doCommand(log:Logger, command:String, simulationID:String):String = {
     command match {
       case "run" =>
         val hanumanRef = hanumanRefOption.get
@@ -137,7 +137,7 @@ trait HanumanService extends BlueEyesServiceBuilder
         val simulationStatus = simulationStatusRef.get
         // TODO return simulationStatus object in JSON format to client
         //monkeyResult.msg
-        ""
+        "TODO return simulation status in JSON format to client"
 
       case _ =>
         command + "is an unknown command"

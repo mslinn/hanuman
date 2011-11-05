@@ -25,7 +25,7 @@ class MonkeyVisorSuite extends FunSuite {
       "abcdefghijklmnopqrstuvwxyz"*25 +
       "0123456789"*2 +
       "`~!@#$%^&*()_-+={[}]|\\\"':;<,>.?/"
-    val monkeyVisor = Actor.actorOf(new MonkeyVisor(simulationID, document, 10, textMatchRefMap, simulationStatusRef)).start()
+    val monkeyVisor = Actor.actorOf(new MonkeyVisor(simulationID, 10, document, 10, textMatchRefMap, simulationStatusRef)).start()
     val future = monkeyVisor ? "generatePages"
     val result:Any = future.get
     // todo write more tests and MonkeyVisor business logic

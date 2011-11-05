@@ -9,8 +9,12 @@ import net.interdoodle.hanuman.message.TextMatch
 
 abstract class Critic {
   var self:ScalaActorRef = null
+  var document = ""
   protected var textMatch = new TextMatch(null, 0, 0, 0)
   private var lastTextMatch = new TextMatch(null, 0, 0, 0)
+
+  /** TODO make this a configurable parameter */
+  private val minimumMatchLength = 2
 
 
   /** Update textMatch; subclass must call super.assessText() as last line of this overridden method */
@@ -18,11 +22,10 @@ abstract class Critic {
     notifySupervisor()
   }
 
-  /** Called from textMatch */
+  /** Subclass must calculate match and figure out what to send */
   def notifySupervisor() {
-    // subclass must calculate match and figure out what to send
-    if (textMatch!=lastTextMatch) {
-       self.sender.foreach(_ ! textMatch)
+    if (textMatch._1>lastTextMatch._1 && textMatch._1>=minimumMatchLength) {
+       self.supervisor ! textMatch
        lastTextMatch = textMatch
     }
   }

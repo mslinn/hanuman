@@ -7,14 +7,17 @@ import akka.actor.{Actor, ActorRef}
 import scala.collection.JavaConversions._
 import net.interdoodle.hanuman.message._
 
-/** Monkey supervisor creates 'monkeysPerVisor' Akka Actor references (to type Monkey) with identical probability distributions.
+
+/** Monkey supervisor manages simulation.
+ * Creates 'monkeysPerVisor' Akka Actor references (to type Monkey) with identical probability distributions.
  * Dispatches requests to generate semi-random text.
  * @author Mike Slinn */
 class MonkeyVisor(val simulationID:String,
+                  val maxTicks:Int,
                   val document:String,
                   val monkeysPerVisor:Int,
                   val textMatchRefMap:Hanuman.TextMatchRefMap,
-                   val simulationStatusRef:Ref[SimulationStatus]) extends Actor {
+                  val simulationStatusRef:Ref[SimulationStatus]) extends Actor {
   var simulationStatus = simulationStatusRef.get
   val letterProbability = new LetterProbabilities()
 
@@ -25,6 +28,9 @@ class MonkeyVisor(val simulationID:String,
   self.lifeCycle = Permanent
   self.faultHandler = OneForOneStrategy(List(classOf[Throwable]), 5, 5000)
 
+  var running = true // is this boolean required or is there a better way?
+  var tickNumber = 1
+
 
   def generatePages() {
     for (monkeyActorRef <- self.linkedActors.values())
@@ -33,38 +39,50 @@ class MonkeyVisor(val simulationID:String,
 
   /** If any monkey finishes, we are done */
   override def postStop() {
-    /*for (val monkeyRef <- self.linkedActors.values()) {
-      monkeyRef.stop()
-      self.unlink(monkeyRef)
-      // TODO how to delete Monkeys?
-    }*/
+    EventHandler.info(this, "Simulation stopped")
+    // TODO how to delete Monkeys?
   }
 
   override def preStart() {
     for (i <- 1 to monkeysPerVisor) {
-      val monkeyRef = Actor.actorOf(new Monkey[SimpleCritic](letterProbability)(() => new SimpleCritic))
+      val monkeyRef = Actor.actorOf(new WorkCell[SimpleCritic](document, letterProbability)(() => new SimpleCritic))
       self.link(monkeyRef)
       monkeyRef.start()
     }
+
+    while (running && tickNumber<=maxTicks) {
+      EventHandler.info(this, "Simulation tick #" + tickNumber.toString())
+      generatePages() // until this Actor is stopped
+      tickNumber += 1
+    }
+
+    for (val monkey <- self.linkedActors.values()) // simulation is now over
+      monkey ! "stop"
   }
 
   def receive = {
     case "generatePages" =>
-      EventHandler.info(this, "MonkeyVisor received 'generatePages' request")
+      EventHandler.info(this, "MonkeyVisor received 'generatePages' message")
       generatePages()
 
     case "stop" =>
+      EventHandler.info(this, "MonkeyVisor received 'stop' message")
+      running = false
       for (monkeyActorRef <- self.linkedActors.values())
         monkeyActorRef ! "stop"
 
     case "stopped" =>
+      EventHandler.info(this, "MonkeyVisor received 'stopped' message")
       self.unlink(self.sender.get)
-      if (self.linkedActors.size()==0)
+      if (self.linkedActors.size()==0) {
+        EventHandler.info(this, "All Monkeys have stopped")
         self.supervisor ! "stopped"
+      }
 
     case TextMatch(monkeyActorRef, matchLength, matchStart, matchEnd) =>
       EventHandler.info(this, monkeyActorRef.uuid + " matched " + document.substring(matchStart, matchEnd))
       if (matchLength==documentLength) { // success!
+        running = false
         simulationStatus = new SimulationStatus(true, Some(monkeyActorRef), simulationStatus.simulations)
         // FIXME simulationStatus.simulations.put(monkeyActorRef, ??)
         self.supervisor ! DocumentMatch(monkeyActorRef, matchStart)
@@ -75,12 +93,5 @@ class MonkeyVisor(val simulationID:String,
 
     case _ =>
       EventHandler.info(this, "MonkeyVisor received an unknown message")
-  }
-
-  
-  /** Remove item from a list */
-  private def remove[A](c:A, l:List[A]) = l indexOf c match {
-    case -1 => l
-    case n => (l take n) ++ (l drop (n + 1))
   }
 }
