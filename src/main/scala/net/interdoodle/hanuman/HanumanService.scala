@@ -29,7 +29,7 @@ trait HanumanService extends BlueEyesServiceBuilder
   var hanumanRefOption:Option[ActorRef] = None
 
   /** TODO make into configurable parameter */
-  val maxTicks:Int = 10
+  val maxTicks:Int = 100
 
   /** TODO make into configurable parameter */
   val monkeysPerVisor:Int = 10
@@ -79,10 +79,12 @@ trait HanumanService extends BlueEyesServiceBuilder
   private def reqOperation[T, S](log:Logger, request:HttpRequest[T]):Future[HttpResponse[JValue]] = {
     val operation = request.parameters('operation)
     if (operation=="newSimulation") {
-      val document = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"*5 + // faked for now because BlueEyes cannot parse POST parameters
+      /** TODO faked for now because BlueEyes cannot parse POST parameters */
+      /*val document = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"*5 +
         "abcdefghijklmnopqrstuvwxyz"*25 +
         "0123456789"*2 +
-        "`~!@#$%^&*()_-+={[}]|\\\"':;<,>.?/"
+        "`~!@#$%^&*()_-+={[}]|\\\"':;<,>.?/"*/
+      val document = "Forty-two and change"
       val simulationID = UUID.randomUUID().toString
 
       simulationStatus.putSimulation(simulationID, None)

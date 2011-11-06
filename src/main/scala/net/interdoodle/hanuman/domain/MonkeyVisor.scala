@@ -80,7 +80,7 @@ class MonkeyVisor(val simulationID:String,
       }
 
     case TextMatch(monkeyActorRef, matchLength, matchStart, matchEnd) =>
-      EventHandler.info(this, monkeyActorRef.uuid + " matched " + document.substring(matchStart, matchEnd))
+      EventHandler.info(this, monkeyActorRef.uuid + " matched " + matchLength + " characters from " + matchStart + " to " + matchEnd)
       if (matchLength==documentLength) { // success!
         running = false
         simulationStatus = new SimulationStatus(true, Some(monkeyActorRef), simulationStatus.simulations)
