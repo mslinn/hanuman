@@ -3,6 +3,7 @@ package net.interdoodle.hanuman
 import net.interdoodle.hanuman.domain._
 import org.scalatest.SuperSuite
 
+
 /** @see http://www.artima.com/sdp/original/org/scalatest/Suite.html
  * Other docs say SuperSuite is deprecated, and that Suites should be used instead, but Suites is not defined.
  * This will probably be addressed soon.
@@ -14,4 +15,4 @@ class HanumanSuite extends SuperSuite(
     //new MonkeyVisorSuite,
     new SimpleCriticSuite
   )
-) { }
+)

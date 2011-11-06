@@ -22,5 +22,4 @@ class MonkeySuite extends FunSuite {
     //val page = monkey.generatePage
     // todo write more tests and Monkey business logic
   }
-
 }

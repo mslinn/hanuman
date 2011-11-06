@@ -1,17 +1,15 @@
 package net.interdoodle.hanuman.domain
 
+import org.scalatest.Assertions._
 import org.scalatest.FunSuite
 import net.interdoodle.hanuman.message.TextMatch
-import org.scalatest.Assertions._
 
 
 /**
  * @author Mike Slinn */
-
 class SimpleCriticSuite extends FunSuite {
   val document = "abcdefghijklmnopqrstuvwxyz"
   val sCritic = new SimpleCritic
-
 
   ignore("matchLen") {
     expect(0)               { sCritic.matchLen(document,     "") }

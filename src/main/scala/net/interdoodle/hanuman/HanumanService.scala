@@ -1,12 +1,12 @@
 package net.interdoodle.hanuman
 
+import akka.actor.{ActorRef, Actor}
 import akka.stm.Ref
 import blueeyes._
 import blueeyes.concurrent.Future
 import blueeyes.core.data.{BijectionsChunkJson, BijectionsChunkString, ByteChunk}
-import blueeyes.core.http.{HttpRequest, HttpResponse, HttpStatus}
+import blueeyes.core.http.{HttpRequest, HttpResponse, HttpStatus, HttpStatusCodes}
 import blueeyes.core.http.combinators.HttpRequestCombinators
-import blueeyes.core.http.HttpStatusCodes
 import blueeyes.json.JsonAST._
 import core.service._
 import java.util.UUID
@@ -14,12 +14,10 @@ import net.interdoodle.hanuman.message.SimulationStatus
 import net.interdoodle.hanuman.domain.Hanuman
 import net.interdoodle.hanuman.domain.Hanuman.Simulations
 import net.lag.logging.Logger
-import akka.actor.{ActorRef, Actor}
 
 
 /**
  * @author Mike Slinn */
-
 trait HanumanService extends BlueEyesServiceBuilder
   with HttpRequestCombinators
   with BijectionsChunkString
@@ -36,8 +34,7 @@ trait HanumanService extends BlueEyesServiceBuilder
   val versionMajor = 0
   val versionMinor = 1
 
-
-  val helloJson: HttpService[ByteChunk] = service("helloJson", "0.1") {
+  val helloJson:HttpService[ByteChunk] = service("helloJson", "0.1") {
     requestLogging {
       logging {
         log =>
@@ -73,14 +70,8 @@ trait HanumanService extends BlueEyesServiceBuilder
   private def reqOperation[T, S](log:Logger, request:HttpRequest[T]):Future[HttpResponse[JValue]] = {
     val operation = request.parameters('operation)
     if (operation=="newSimulation") {
-      /** TODO faked for now because BlueEyes cannot parse POST parameters */
-      /*val document = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"*5 +
-        "abcdefghijklmnopqrstuvwxyz"*25 +
-        "0123456789"*2 +
-        "`~!@#$%^&*()_-+={[}]|\\\"':;<,>.?/"*/
-      val document = "Forty-two and change"
+      val document = Configuration().defaultDocument
       val simulationID = UUID.randomUUID().toString
-
       simulationStatus.putSimulation(simulationID, None)
       hanumanRefOption = Some(Actor.actorOf(
         new Hanuman(simulationID, Configuration().monkeysPerVisor, Configuration().maxTicks, document, simulationStatusRef)))
