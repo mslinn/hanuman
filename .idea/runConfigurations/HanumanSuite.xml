@@ -1,0 +1,19 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="HanumanSuite" type="ScalaTestRunConfiguration" factoryName="ScalaTest">
+    <module name="default-57e5b8" />
+    <setting name="path" value="net.interdoodle.hanuman.HanumanSuite" />
+    <setting name="package" value="" />
+    <setting name="vmparams" value="" />
+    <setting name="params" value="" />
+    <setting name="workingDirectory" value="$PROJECT_DIR$" />
+    <RunnerSettings RunnerId="Debug">
+      <option name="DEBUG_PORT" value="58011" />
+      <option name="TRANSPORT" value="0" />
+      <option name="LOCAL" value="true" />
+    </RunnerSettings>
+    <ConfigurationWrapper RunnerId="Debug" />
+    <method>
+      <option name="SBT.BeforeRunTask" enabled="true" action="copy-resources" runInCurrentModule="false" />
+    </method>
+  </configuration>
+</component>
