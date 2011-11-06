@@ -34,7 +34,7 @@ class WorkCell[C <: Critic](val document:String, val letterProbability:LetterPro
     case TypingRequest(workCellRef) =>
       EventHandler.info(this, workCellRef.uuid + " received TypingRequest")
       var page = monkey.generatePage
-      critic.assessText(document, workCellRef, monkey.page, monkey.generatedText) // notifies MonkeyVisor of passage match if necessary
+      critic.assessText(document, workCellRef, monkey.generatedText, page) // notifies MonkeyVisor of passage match if necessary
 
     case _ =>
       EventHandler.info(this, "Monkey received an unknown message: " + self)
