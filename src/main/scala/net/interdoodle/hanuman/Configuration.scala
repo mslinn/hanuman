@@ -11,7 +11,6 @@ class Configuration(config:Config) {
 }
 
 object Configuration {
-  var cl = getClass.getClassLoader
   private val configuration = Config.fromResource("hanuman.conf", getClass.getClassLoader)
   private var config = new Configuration(configuration)
 
