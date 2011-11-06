@@ -4,16 +4,16 @@ seq(StartScriptPlugin.startScriptForClassesSettings: _*)
 
 name := "hanuman"
 
-version := "1.0"
+version := "0.1"
 
 scalaVersion := "2.9.1"
 
 resolvers ++= Seq(
   "Typesafe Releases" at "http://repo.typesafe.com/typesafe/releases",
-  "Sonatype"    at "http://nexus.scala-tools.org/content/repositories/public",
-  "Scala Tools" at "http://scala-tools.org/repo-releases/",
-  "JBoss"       at "http://repository.jboss.org/nexus/content/groups/public/",
-  "GuiceyFruit" at "http://guiceyfruit.googlecode.com/svn/repo/releases/"
+  "Sonatype"          at "http://nexus.scala-tools.org/content/repositories/public",
+  "Scala Tools"       at "http://scala-tools.org/repo-releases/",
+  "JBoss"             at "http://repository.jboss.org/nexus/content/groups/public/",
+  "GuiceyFruit"       at "http://guiceyfruit.googlecode.com/svn/repo/releases/"
 )
 
 libraryDependencies ++= Seq(

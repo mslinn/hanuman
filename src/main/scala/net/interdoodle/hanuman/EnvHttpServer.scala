@@ -12,13 +12,11 @@ import util.Properties
 trait EnvHttpServer extends HttpServer { self =>
 
   override def main(args: Array[String]) {
-    
-    // build a config string
     val configString = "server.port = " + Properties.envOrElse("PORT", "8585") + "\n" +
                        "server.sslEnable = " + Properties.envOrElse("SSL_ENABLE", "false")
-    
+
     Configgy.configureFromString(configString)
-          
+
     start.deliverTo { _ =>
       Runtime.getRuntime.addShutdownHook { new Thread {
         override def start() {

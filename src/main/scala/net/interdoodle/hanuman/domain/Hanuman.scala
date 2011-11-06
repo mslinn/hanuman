@@ -19,7 +19,7 @@ class Hanuman(val simulationID:String,
   var simulationStatus = simulationStatusRef.get
   val monkeyResultRefMap = new Hanuman.TextMatchRefMap()
 
-  
+
   override def postStop() {
   }
 
@@ -51,8 +51,6 @@ class Hanuman(val simulationID:String,
         monkeyVisorRef.stop() // monkeyVisor's postStop() also stops linked Monkeys
         self.unlink(monkeyVisorRef)
       }
-      //simulationStatus.put(monkeyRef.uuid, ??)
-      simulationStatusRef.set(simulationStatus)
 
     case "stopped" =>
       EventHandler.info(this, "Hanuman received a 'stopped' message from a MonkeyVisor")

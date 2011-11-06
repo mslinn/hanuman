@@ -27,16 +27,10 @@ trait HanumanService extends BlueEyesServiceBuilder
 
   var hanuman:Option[Hanuman] = None
   var hanumanRefOption:Option[ActorRef] = None
-
-  /** TODO make into configurable parameter */
-  val maxTicks:Int = 100
-
-  /** TODO make into configurable parameter */
-  val monkeysPerVisor:Int = 10
-
   val simulations:Simulations = new Simulations()
+
   /** Contains simulationID->Option[MonkeyVisorRef] map */
-  val simulationStatus = new SimulationStatus(false, None, simulations)
+  var simulationStatus = new SimulationStatus(false, None, simulations)
   val simulationStatusRef = new Ref(simulationStatus)
 
   val versionMajor = 0
@@ -88,7 +82,8 @@ trait HanumanService extends BlueEyesServiceBuilder
       val simulationID = UUID.randomUUID().toString
 
       simulationStatus.putSimulation(simulationID, None)
-      hanumanRefOption = Some(Actor.actorOf(new Hanuman(simulationID, monkeysPerVisor, maxTicks, document, simulationStatusRef)))
+      hanumanRefOption = Some(Actor.actorOf(
+        new Hanuman(simulationID, Configuration().monkeysPerVisor, Configuration().maxTicks, document, simulationStatusRef)))
       simulationStatus.putSimulation(simulationID, hanumanRefOption)
       simulationStatusRef.set(simulationStatus)
 
@@ -136,10 +131,16 @@ trait HanumanService extends BlueEyesServiceBuilder
         "Updated simulationStatus with new Hanuman instance " + hanumanRef.id + " and started hanuman"
 
       case "status" =>
-        val simulationStatus = simulationStatusRef.get
+        simulationStatus = simulationStatusRef.get
         // TODO return simulationStatus object in JSON format to client
-        //monkeyResult.msg
         "TODO return simulation status in JSON format to client"
+
+      case "stop" =>
+        val hanumanRef = hanumanRefOption.get
+        hanumanRef ? "stop" // block until hanuman shuts down
+        // TODO return simulationStatus object in JSON format to client
+        simulationStatus = simulationStatusRef.get
+        "Simulation " + simulationID + " stopped"
 
       case _ =>
         command + "is an unknown command"

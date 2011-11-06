@@ -18,6 +18,7 @@ class MonkeyVisor(val simulationID:String,
                   val monkeysPerVisor:Int,
                   val textMatchRefMap:Hanuman.TextMatchRefMap,
                   val simulationStatusRef:Ref[SimulationStatus]) extends Actor {
+  /** MonkeyVisors keep simulationStatus up to date so supervisor does not have to worry about maintaining it */
   var simulationStatus = simulationStatusRef.get
   val letterProbability = new LetterProbabilities()
 
