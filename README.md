@@ -84,7 +84,7 @@ Run clients against local service instance
 Run on Heroku
 -------------
 
-Mike Slinn has deployed the app to http://strong-galaxy-4334.herokuapp.com/
+Mike Slinn has deployed the app to http://hollow-winter-3011.herokuapp.com/
 
 You can deploy it to your own Heroku app instance this way:
 
@@ -98,11 +98,11 @@ You can deploy it to your own Heroku app instance this way:
 
 4. Create your new app instance on Heroku:
 
-        heroku create --stack cedar --addons mongolab:starter
+        heroku create --stack cedar
 
-5. Add your Heroku app instance as a remote git repository. Substitute your Heroku app instance for ````strong-galaxy-4334````:
+5. Add your Heroku app instance as a remote git repository. Substitute your Heroku app instance for ````hollow-winter-3011````:
 
-        git remote add heroku git@heroku.com:strong-galaxy-4334.git
+        git remote add heroku git@heroku.com:hollow-winter-3011.git
 
 6. Push the Hanuman app to Heroku; it will automatically be (re)built and run.
 
