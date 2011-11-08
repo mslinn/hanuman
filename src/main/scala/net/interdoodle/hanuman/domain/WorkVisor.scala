@@ -13,7 +13,7 @@ import scala.collection.JavaConversions._
  * Creates 'monkeysPerVisor' Akka Actor references (to type Monkey) with identical probability distributions.
  * Dispatches requests to generate semi-random text.
  * @author Mike Slinn */
-class MonkeyVisor(val simulationID:String,
+class WorkVisor(val simulationID:String,
                   val maxTicks:Int,
                   val document:String,
                   val monkeysPerVisor:Int,

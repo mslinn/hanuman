@@ -9,7 +9,7 @@ import org.scalatest.FunSuite
 
 /** @see http://www.scalatest.org/scaladoc/1.6.1/#org.scalatest.FunSuite
  * @author Mike Slinn */
-class MonkeyVisorSuite extends FunSuite {
+class WorkVisorSuite extends FunSuite {
   test("generatePage") {
     val simulationID = "simulation1"
     val workCellActorRef = null
@@ -27,7 +27,7 @@ class MonkeyVisorSuite extends FunSuite {
       "abcdefghijklmnopqrstuvwxyz"*25 +
       "0123456789"*2 +
       "`~!@#$%^&*()_-+={[}]|\\\"':;<,>.?/"
-    val monkeyVisor = Actor.actorOf(new MonkeyVisor(simulationID, 10, document, 10, textMatchMapRef)).start()
+    val monkeyVisor = Actor.actorOf(new WorkVisor(simulationID, 10, document, 10, textMatchMapRef)).start()
     val future = monkeyVisor ? "generatePages"
     val result:Any = future.get
     // todo write more tests and MonkeyVisor business logic
