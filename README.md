@@ -79,7 +79,12 @@ Run clients against local service instance
 
         curl --header "Content-Type:application/json" http://localhost:8585/json
 
-2. The ````test```` script fully exercises the Hanuman web API.
+2. The ````test```` script fully exercises the Hanuman web API. It can work against a local Hanuman service instance
+or a remote service instance at a specified URL. Sample usages:
+
+        ./test
+        ./test http://hollow-winter-3011.herokuapp.com
+
 
 Run on Heroku
 -------------
