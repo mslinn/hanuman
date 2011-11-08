@@ -100,14 +100,14 @@ You can deploy it to your own Heroku app instance this way:
 
         heroku create --stack cedar --addons mongolab:starter
 
-5. Add your Heroku app instance as a remote git repository:
+5. Add your Heroku app instance as a remote git repository. Substitute your Heroku app instance for ````strong-galaxy-4334````:
 
         git remote add heroku git@heroku.com:strong-galaxy-4334.git
 
-6. Push the Hanuman app to Heroku; it will automatically be (re)built and run. Substitute your Heroku app instance for ````strong-galaxy-4334````
+6. Push the Hanuman app to Heroku; it will automatically be (re)built and run.
 
         git push heroku master
 
-   You can also manually run the ````sbt```` console on Heroku:
+You can also manually run the ````sbt```` console on Heroku:
 
     heroku run sbt console
