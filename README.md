@@ -58,7 +58,7 @@ computationally expensive and presents a possible choke point.
 Marshalling changes via a sequence of ````ticks```` reduces potential conflicts.
 
 
-Run locally
+Run Locally
 -----------
 
 1. Clone this [git repo](https://github.com/mslinn/hanuman).
@@ -72,8 +72,8 @@ Run locally
         sbt run
 
 
-Run clients against local service instance
-------------------------------------------
+Run Clients Against Local or Remote Service Instances
+-----------------------------------------------------
 
 1. JSON service (without the correct `Content-Type header` there will be no response).
 
