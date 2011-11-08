@@ -52,7 +52,7 @@ Clients that might poll for results require a different strategy; a result cache
 and the cache is updated on each ````tick```` by the ````Hanuman```` actor supervisor.
 
 The ````HanumanService```` creates the ````Hanuman```` actor/supervisor, and the ````Hanuman```` constructor accepts an
-Akka Ref to a ````Simulations``` instance, which is a ````Map```` of ````simulationID -> TextMatchMap````.
+Akka Ref to a ````Simulations```` instance, which is a ````Map```` of ````simulationID -> TextMatchMap````.
 Getting values from the Ref and and setting new values are performed within an implicit software transaction, which is
 computationally expensive and presents a possible choke point.
 Marshalling changes via a sequence of ````ticks```` reduces potential conflicts.
