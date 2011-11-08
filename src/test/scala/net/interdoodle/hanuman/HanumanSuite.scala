@@ -12,7 +12,7 @@ class HanumanSuite extends SuperSuite(
   List(
     new LetterProbabilitiesSuite,
     new MonkeySuite,
-    //new MonkeyVisorSuite,
+    //new WorkVisorSuite,
     new SimpleCriticSuite
   )
 )

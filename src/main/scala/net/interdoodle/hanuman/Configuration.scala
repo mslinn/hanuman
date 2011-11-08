@@ -9,7 +9,7 @@ class Configuration(config:Config) {
   val defaultDocument    = config.getString("defaultDocument", "Forty-two and change.")
   val maxTicks           = config.getInt("maxTicks", 100)
   val minimumMatchLength = config.getInt("minimumMatchLength", 3)
-  val monkeysPerVisor    = config.getInt("monkeysPerVisor", 10)
+  val workCellsPerVisor  = config.getInt("workCellsPerVisor", 10)
 }
 
 object Configuration {

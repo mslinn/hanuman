@@ -27,14 +27,14 @@ trait HanumanService extends BlueEyesServiceBuilder
   var hanumanRefOption:Option[ActorRef] = None
   val simulations:Simulations = new Simulations()
 
-  /** Contains simulationID->Option[MonkeyVisorRef] map */
+  /** Contains simulationID->Option[WorkVisorRef] map */
   var simulationStatus = new SimulationStatus(false, None, simulations)
   val simulationStatusRef = new Ref(simulationStatus)
 
   val versionMajor = 0
   val versionMinor = 1
 
-  val helloJson:HttpService[ByteChunk] = service("helloJson", versionMajor + "." + versionMinor) {
+  val hanumanService:HttpService[ByteChunk] = service("hanumanService", versionMajor + "." + versionMinor) {
     requestLogging {
       logging {
         log =>
@@ -75,7 +75,7 @@ trait HanumanService extends BlueEyesServiceBuilder
       simulationStatus.putSimulation(simulationID, new TextMatchMap())
       simulationStatusRef.set(simulationStatus)
       hanumanRefOption = Some(Actor.actorOf(
-        new Hanuman(simulationID, Configuration().monkeysPerVisor, Configuration().maxTicks, document, simulationStatusRef)))
+        new Hanuman(simulationID, Configuration().workCellsPerVisor, Configuration().maxTicks, document, simulationStatusRef)))
 
       Future.sync(HttpResponse(
         /*headers = HttpHeaders.Empty + sessionCookie(simulationID),*/

@@ -27,9 +27,9 @@ class WorkVisorSuite extends FunSuite {
       "abcdefghijklmnopqrstuvwxyz"*25 +
       "0123456789"*2 +
       "`~!@#$%^&*()_-+={[}]|\\\"':;<,>.?/"
-    val monkeyVisor = Actor.actorOf(new WorkVisor(simulationID, 10, document, 10, textMatchMapRef)).start()
-    val future = monkeyVisor ? "generatePages"
+    val workVisor = Actor.actorOf(new WorkVisor(simulationID, 10, document, 10, textMatchMapRef)).start()
+    val future = workVisor ? "generatePages"
     val result:Any = future.get
-    // todo write more tests and MonkeyVisor business logic
+    // todo write more tests and WorkVisor business logic
   }
 }

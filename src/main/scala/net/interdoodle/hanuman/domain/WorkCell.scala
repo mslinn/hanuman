@@ -21,7 +21,7 @@ class WorkCell[C <: Critic](val document:String, val letterProbability:LetterPro
 
 
 
-  // TODO register with MonkeyVisor after restart
+  // TODO register with WorkVisor after restart
 
   override def preStart() {
     monkey.generatedText = ""
@@ -34,7 +34,7 @@ class WorkCell[C <: Critic](val document:String, val letterProbability:LetterPro
     case TypingRequest(workCellRef) =>
       EventHandler.debug(this, workCellRef.uuid + " received TypingRequest")
       var page = monkey.generatePage
-      critic.assessText(document, workCellRef, monkey.generatedText, page) // notifies MonkeyVisor of passage match if necessary
+      critic.assessText(document, workCellRef, monkey.generatedText, page) // notifies WorkVisor of passage match if necessary
 
     case _ =>
       EventHandler.info(this, "WorkCell received an unknown message: " + self)

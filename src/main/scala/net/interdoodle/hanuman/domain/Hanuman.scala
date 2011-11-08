@@ -25,15 +25,15 @@ class Hanuman(val simulationID:String,
   }
 
   override def preStart() {
-    createMonkeyVisor()
+    createWorkVisor()
   }
 
-  def createMonkeyVisor() {
-    val monkeyVisorRef = Actor.actorOf(
-      new MonkeyVisor(simulationID, maxTicks, document, monkeysPerVisor, textMatchMapRef))
+  def createWorkVisor() {
+    val workVisorRef = Actor.actorOf(
+      new WorkVisor(simulationID, maxTicks, document, monkeysPerVisor, textMatchMapRef))
     simulationStatus.putSimulation(simulationID, textMatchMapRef.get)
-    self.link(monkeyVisorRef)
-    monkeyVisorRef.start()
+    self.link(workVisorRef)
+    workVisorRef.start()
   }
 
   def receive = {
@@ -45,13 +45,13 @@ class Hanuman(val simulationID:String,
 
     case "stop" =>
       EventHandler.debug(this, "Hanuman received a stop message")
-      for (monkeyVisorRef <- self.linkedActors.values()) {
-        monkeyVisorRef.stop() // monkeyVisor's postStop() also stops linked Monkeys
-        self.unlink(monkeyVisorRef)
+      for (workVisorRef <- self.linkedActors.values()) {
+        workVisorRef.stop() // workVisor's postStop() also stops linked WorkCells
+        self.unlink(workVisorRef)
       }
 
     case "stopped" =>
-      EventHandler.debug(this, "Hanuman received a 'stopped' message from a MonkeyVisor")
+      EventHandler.debug(this, "Hanuman received a 'stopped' message from a WorkVisor")
       if (self.linkedActors.size()==0) { // MonkeyVisor already summarized its simulation
         //self.stop() // Keep Hanuman running
       }

@@ -10,7 +10,7 @@ import net.interdoodle.hanuman.message.TextMatch
 abstract class Critic {
   var document = ""
   private var lastTextMatch = new TextMatch(null, 0, 0, 0)
-  protected val minimumMatchLength = Configuration().monkeysPerVisor
+  protected val minimumMatchLength = Configuration().workCellsPerVisor
   var self:ScalaActorRef = null
 
   /** Set by subclass */
