@@ -1,18 +1,17 @@
 package net.interdoodle.hanuman.message
 
 import akka.actor.ActorRef
-import net.interdoodle.hanuman.domain.Hanuman.Simulations
+import net.interdoodle.hanuman.domain.Hanuman.{Simulations, TextMatchMap}
 
 
-/** Contains map of simulationID->Option[MonkeyVisorRef]
+/** 
  * @author Mike Slinn */
 case class SimulationStatus(complete:Boolean, winner:Option[ActorRef], simulations:Simulations) {
-
   def getSimulation(simulationID:String) = {
     simulations.getOrElse(simulationID, None)
   }
 
-  def putSimulation(simulationID:String, monkeyRef:Option[ActorRef]) = {
-    simulations += simulationID -> monkeyRef
+  def putSimulation(simulationID:String, textMatchMap:TextMatchMap) = {
+    simulations += simulationID -> textMatchMap
   }
 }

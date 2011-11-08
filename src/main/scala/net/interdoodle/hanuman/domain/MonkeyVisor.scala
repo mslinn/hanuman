@@ -4,7 +4,7 @@ import akka.actor.Actor
 import akka.config.Supervision.{OneForOneStrategy, Permanent}
 import akka.event.EventHandler
 import akka.stm.Ref
-import net.interdoodle.hanuman.domain.Hanuman._
+import net.interdoodle.hanuman.domain.Hanuman.TextMatchMapRef
 import net.interdoodle.hanuman.message._
 import scala.collection.JavaConversions._
 
@@ -17,8 +17,7 @@ class MonkeyVisor(val simulationID:String,
                   val maxTicks:Int,
                   val document:String,
                   val monkeysPerVisor:Int,
-                  val textMatchRefMap:TextMatchRefMap,
-                  val simulationStatusRef:Ref[SimulationStatus]) extends Actor {
+                  val textMatchMapRef:TextMatchMapRef) extends Actor {
   val documentLength = document.length()
 
   val letterProbability = new LetterProbabilities()
@@ -29,29 +28,28 @@ class MonkeyVisor(val simulationID:String,
   self.faultHandler = OneForOneStrategy(List(classOf[Throwable]), 5, 5000)
 
   /** MonkeyVisors keep simulationStatus up to date so supervisor does not have to worry about maintaining it */
-  var simulationStatus = simulationStatusRef.get
   var running = false
   var tickNumber = 1
 
 
   def generatePages() {
-    for (monkeyActorRef <- self.linkedActors.values())
-      monkeyActorRef ! TypingRequest(monkeyActorRef)
+    for (workUnitActorRef <- self.linkedActors.values())
+      workUnitActorRef ! TypingRequest(workUnitActorRef)
   }
 
   /** If any monkey finishes, we are done */
   override def postStop() {
     EventHandler.debug(this, "Simulation stopped")
-    // TODO how to delete Monkeys?
+    // TODO how to delete WorkUnit?
   }
 
   override def preStart() {
     running = true
     tickNumber = 1
     for (i <- 1 to monkeysPerVisor) {
-      val monkeyRef = Actor.actorOf(new WorkCell[SimpleCritic](document, letterProbability)(() => new SimpleCritic))
-      self.link(monkeyRef)
-      monkeyRef.start()
+      val workCellRef = Actor.actorOf(new WorkCell[SimpleCritic](document, letterProbability)(() => new SimpleCritic))
+      self.link(workCellRef)
+      workCellRef.start()
     }
 
     while (running && tickNumber<=maxTicks) {
@@ -60,7 +58,7 @@ class MonkeyVisor(val simulationID:String,
       tickNumber += 1
     }
 
-    for (val monkey <- self.linkedActors.values()) // simulation is now over
+    for (monkey <- self.linkedActors.values()) // simulation is now over
       monkey ! "stop"
   }
 
@@ -72,8 +70,8 @@ class MonkeyVisor(val simulationID:String,
     case "stop" =>
       EventHandler.debug(this, "MonkeyVisor received 'stop' message")
       running = false
-      for (monkeyActorRef <- self.linkedActors.values())
-        monkeyActorRef ! "stop"
+      for (workUnitActorRef <- self.linkedActors.values())
+        workUnitActorRef ! "stop"
 
     case "stopped" =>
       EventHandler.debug(this, "MonkeyVisor received 'stopped' message")
@@ -83,17 +81,14 @@ class MonkeyVisor(val simulationID:String,
         self.supervisor ! "stopped"
       }
 
-    case TextMatch(monkeyActorRef, matchLength, matchStart, matchEnd) =>
-      EventHandler.debug(this, monkeyActorRef.uuid + " matched " + matchLength + " characters from " + matchStart + " to " + matchEnd)
-      if (matchLength==documentLength) { // success!
+    case TextMatch(workUnitRefRef, matchLength, matchStart, matchEnd) =>
+      EventHandler.debug(this, workUnitRefRef.uuid + " matched " + matchLength + " characters from " + matchStart + " to " + matchEnd)
+      if (matchLength==documentLength) // success!
         running = false
-        simulationStatus = new SimulationStatus(true, Some(monkeyActorRef), simulationStatus.simulations)
-        // FIXME simulationStatus.simulations.put(monkeyActorRef, ??)
-        self.supervisor ! DocumentMatch(monkeyActorRef, matchStart)
-      } else {
-        // FIXME simulationStatus.simulations.put(monkeyActorRef, ??)
-      }
-      simulationStatusRef.set(simulationStatus)
+      val textMatchMap = textMatchMapRef.get
+      textMatchMap += workUnitRefRef.uuid -> TextMatch(workUnitRefRef, matchLength, matchStart, matchEnd)
+      textMatchMapRef.set(textMatchMap)
+      self.supervisor ! DocumentMatch(workUnitRefRef, matchStart)
 
     case _ =>
       EventHandler.info(this, "MonkeyVisor received an unknown message")

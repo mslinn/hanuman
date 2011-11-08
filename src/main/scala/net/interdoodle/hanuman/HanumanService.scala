@@ -12,7 +12,7 @@ import core.service._
 import java.util.UUID
 import net.interdoodle.hanuman.message.SimulationStatus
 import net.interdoodle.hanuman.domain.Hanuman
-import net.interdoodle.hanuman.domain.Hanuman.Simulations
+import net.interdoodle.hanuman.domain.Hanuman.{Simulations, TextMatchMap}
 import net.lag.logging.Logger
 
 
@@ -34,7 +34,7 @@ trait HanumanService extends BlueEyesServiceBuilder
   val versionMajor = 0
   val versionMinor = 1
 
-  val helloJson:HttpService[ByteChunk] = service("helloJson", "0.1") {
+  val helloJson:HttpService[ByteChunk] = service("helloJson", versionMajor + "." + versionMinor) {
     requestLogging {
       logging {
         log =>
@@ -72,11 +72,10 @@ trait HanumanService extends BlueEyesServiceBuilder
     if (operation=="newSimulation") {
       val document = Configuration().defaultDocument
       val simulationID = UUID.randomUUID().toString
-      simulationStatus.putSimulation(simulationID, None)
+      simulationStatus.putSimulation(simulationID, new TextMatchMap())
+      simulationStatusRef.set(simulationStatus)
       hanumanRefOption = Some(Actor.actorOf(
         new Hanuman(simulationID, Configuration().monkeysPerVisor, Configuration().maxTicks, document, simulationStatusRef)))
-      simulationStatus.putSimulation(simulationID, hanumanRefOption)
-      simulationStatusRef.set(simulationStatus)
 
       Future.sync(HttpResponse(
         /*headers = HttpHeaders.Empty + sessionCookie(simulationID),*/
@@ -114,7 +113,7 @@ trait HanumanService extends BlueEyesServiceBuilder
     )
   }
 
-  private def doCommand(log:Logger, command:String, simulationID:String):String = {
+  private def doCommand(log:Logger, command:String, simulationID:String):JValue = {
     command match {
       case "run" =>
         val hanumanRef = hanumanRefOption.get
@@ -122,9 +121,11 @@ trait HanumanService extends BlueEyesServiceBuilder
         "Updated simulationStatus with new Hanuman instance " + hanumanRef.id + " and started hanuman"
 
       case "status" =>
-        simulationStatus = simulationStatusRef.get
-        // TODO return simulationStatus object in JSON format to client
-        "TODO return simulation status in JSON format to client"
+        /** Return status of simulation with given simulationID */
+        val simulation = simulationStatusRef.get.simulations(simulationID)
+        val result = for (kv <- simulation) // Iterable[TextMatch]
+            yield (kv._2).toString()
+        return result.toString()
 
       case "stop" =>
         val hanumanRef = hanumanRefOption.get

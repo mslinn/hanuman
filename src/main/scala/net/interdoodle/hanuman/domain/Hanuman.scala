@@ -1,12 +1,13 @@
 package net.interdoodle.hanuman.domain
 
-import akka.actor.{ActorRef, Actor}
+import akka.actor.Actor
 import akka.event.EventHandler
 import akka.stm.Ref
 import collection.mutable.HashMap
-import net.interdoodle.hanuman.domain.Hanuman._
+import net.interdoodle.hanuman.domain.Hanuman.TextMatchMapRef
 import net.interdoodle.hanuman.message._
 import scala.collection.JavaConversions._
+import akka.actor.Uuid
 
 
 /** Monkey god (supervises simulations/Monkey supervisors)
@@ -17,7 +18,7 @@ class Hanuman(val simulationID:String,
               val document:String,
               val simulationStatusRef:Ref[SimulationStatus]) extends Actor {
   var simulationStatus = simulationStatusRef.get
-  val monkeyResultRefMap = new TextMatchRefMap()
+  val textMatchMapRef = new TextMatchMapRef()
 
 
   override def postStop() {
@@ -28,24 +29,23 @@ class Hanuman(val simulationID:String,
   }
 
   def createMonkeyVisor() {
-    val monkeyResult = new TextMatch(null, 0, 0, 0)
     val monkeyVisorRef = Actor.actorOf(
-      new MonkeyVisor(simulationID, maxTicks, document, monkeysPerVisor, monkeyResultRefMap, simulationStatusRef))
-    simulationStatus.putSimulation(simulationID, Some(monkeyVisorRef))
+      new MonkeyVisor(simulationID, maxTicks, document, monkeysPerVisor, textMatchMapRef))
+    simulationStatus.putSimulation(simulationID, textMatchMapRef.get)
     self.link(monkeyVisorRef)
     monkeyVisorRef.start()
   }
 
   def receive = {
-    case DocumentMatch(monkeyRef, startIndex) =>
+    case DocumentMatch(workUnitRef, startIndex) =>
       // TODO summarize
-      //simulationStatus.put(monkeyRef.uuid, ??)
+      //simulationStatus.put(workUnitRef.uuid, ??)
       simulationStatusRef.set(simulationStatus)
       EventHandler.debug(this, "Hanuman is done")
 
     case "stop" =>
       EventHandler.debug(this, "Hanuman received a stop message")
-      for (val monkeyVisorRef <- self.linkedActors.values()) {
+      for (monkeyVisorRef <- self.linkedActors.values()) {
         monkeyVisorRef.stop() // monkeyVisor's postStop() also stops linked Monkeys
         self.unlink(monkeyVisorRef)
       }
@@ -62,7 +62,8 @@ class Hanuman(val simulationID:String,
 }
 
 object Hanuman {
-  type Simulations = HashMap[String, Option[ActorRef]]
-  type TextMatchMap = HashMap[String, TextMatch]
-  type TextMatchRefMap = HashMap[String, Ref[TextMatch]]
+  /** map of simulation sessionID to TextMatch map */
+  type Simulations = HashMap[String, TextMatchMap]
+  type TextMatchMap = HashMap[Uuid, TextMatch]
+  type TextMatchMapRef = Ref[TextMatchMap]
 }

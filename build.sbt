@@ -8,6 +8,8 @@ version := "0.1"
 
 scalaVersion := "2.9.1"
 
+scalacOptions ++= Seq("-deprecation")
+
 resolvers ++= Seq(
   "Typesafe Releases" at "http://repo.typesafe.com/typesafe/releases",
   "Sonatype"          at "http://nexus.scala-tools.org/content/repositories/public",

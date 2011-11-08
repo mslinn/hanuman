@@ -37,6 +37,6 @@ class WorkCell[C <: Critic](val document:String, val letterProbability:LetterPro
       critic.assessText(document, workCellRef, monkey.generatedText, page) // notifies MonkeyVisor of passage match if necessary
 
     case _ =>
-      EventHandler.info(this, "Monkey received an unknown message: " + self)
+      EventHandler.info(this, "WorkCell received an unknown message: " + self)
   }
 }
