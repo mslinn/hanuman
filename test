@@ -1,24 +1,31 @@
 #!/bin/bash
 
-# Test Hanuman Service
+# Test Hanuman Service locally or at a specified URL
+# Sample usage:
+#   ./test
+#   ./test http://hollow-winter-3011.herokuapp.com
+
 
 function removeQuotes {
    echo "$*"|sed -s "s/^\(\(\"\(.*\)\"\)\|\('\(.*\)'\)\)\$/\\3\\5/g"
 }
 
-VER=$(curl -sSf --header "Content-Type:application/json" 'http://localhost:8585/json/')
+DOMAIN=http://localhost:8585
+if [ "$1" ]; then DOMAIN="$1"; fi
+
+VER=$(curl -sSf --header "Content-Type:application/json" "$DOMAIN/json/")
 echo "Should show Hanuman version: $VER"
 
 echo -en "\nShould report return code 22 because of HTTP status 404: "
-BAD=$(curl -sSf --header "Content-Type:application/json" 'http://localhost:8585/json/badURI/x/y/z/')
+BAD=$(curl -sSf --header "Content-Type:application/json" "$DOMAIN/json/badURI/x/y/z/")
 
-SID=$(curl -sSf --header "Content-Type:application/json" 'http://localhost:8585/json/newSimulation')
+SID=$(curl -sSf --header "Content-Type:application/json" "$DOMAIN/json/newSimulation")
 SIMULATION_ID=$(removeQuotes $SID)
 echo -e "\nHanuman simulation ID is $SIMULATION_ID"
 
-MSG=$(curl -sSf --header "Content-Type:application/json" "http://localhost:8585/json/run/$SIMULATION_ID")
+MSG=$(curl -sSf --header "Content-Type:application/json" "$DOMAIN/json/run/$SIMULATION_ID")
 echo -e "\n$(removeQuotes $MSG)"
 
 # Causes https://github.com/jdegoes/blueeyes/issues/29
-#MSG=$(curl -sSv --header "Content-Type:application/json" --data-urlencode "document=Of course you realize that this means war" "http://localhost:8585/json/blah/$SIMULATION_ID")
+#MSG=$(curl -sSv --header "Content-Type:application/json" --data-urlencode "document=Of course you realize that this means war" "$DOMAIN/json/blah/$SIMULATION_ID")
 #echo "$(removeQuotes $MSG)"
