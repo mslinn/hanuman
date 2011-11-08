@@ -17,16 +17,16 @@ given document.
 ````Monkey```` instances generate pages of semi-random text, and their ````Critic````s compare the generated text to a
 target document.
 ````WorkVisor```` actors supervise the ````WorkCell````s for a simulation.
-Because ````HanumanService```` can support a multiplicity of simulatneous simulations,
+Because ````HanumanService```` can support a multiplicity of simulaneous simulations,
 a ````Hanuman```` actor supervises ````WorkVisors````.
 
 The simulation is sequenced by ````tick````s.
 ````Monkey```` actors generate a page (by default, 1000 characters) of random text per ````tick````,
 in the hope that they can match some portion of the target document.
 To start a simulation, a client first requests a new simulation ID from ````HanumanService````.
-TODO provide the ability to upload the document that the ````Monkey````s are to attempt to replicate for a simulation.
-Before generating random text, ````Monkey````s are first trained with a map of ````Char->probability```` when they are
-constructed.
+_TODO provide the ability to upload the document that the ````Monkey````s are to attempt to replicate for a simulation._
+Before generating random text, ````Monkey````s are first trained with a ````LetterProbabilities```` map of
+````Char->probability```` when they are constructed.
 A simulation terminates when a maximum number of ````tick````s have occurred, or the target document has been replicated.
 
 ````Monkey````s are unaware of the document they are attempting to replicate, and they are unaware of how the
@@ -40,7 +40,6 @@ generated text has a better match than before to a passage in the target documen
 Each simulation is managed by a ````WorkVisor```` actor/supervisor.
 Hanuman stores the most recent ````TextMatch```` for the ````WorkCell```` in a ````TextMatchMap````,
 which is defined as ````Map```` of ````Actor.Uuid -> TextMatch````.
-
 Akka ````Ref````s are passed into each ````Hanuman```` and ````WorkCell```` actor/ supervisor, which sets/gets result
 values atomically using shared-nothing state.
 
@@ -50,12 +49,13 @@ results per ````WorkCell```` are few.
 This means that it is inexpensive to transmit results from a ````Critic```` in a ````WorkCell```` to its supervising
 ````WorkVisor```` via an Akka message.
 Clients that might poll for results require a different strategy; a result cache is returned to them,
-and the cache is updated each ````tick```` by the ````Hanuman```` actor supervisor.
+and the cache is updated on each ````tick```` by the ````Hanuman```` actor supervisor.
 
 The ````HanumanService```` creates the ````Hanuman```` actor/supervisor, and the ````Hanuman```` constructor accepts an
-Akka Ref to a Map of ````simulationID -> TextMatchMap````. Getting values from the Ref and and setting new values
-are performed within an implicit software transaction, which is computationally expensive and presents a possible
-choke point. Marshalling changes via a sequence of ````ticks```` reduces potential conflicts.
+Akka Ref to a ````Simulations``` instance, which is a ````Map```` of ````simulationID -> TextMatchMap````.
+Getting values from the Ref and and setting new values are performed within an implicit software transaction, which is
+computationally expensive and presents a possible choke point.
+Marshalling changes via a sequence of ````ticks```` reduces potential conflicts.
 
 
 Run locally
@@ -63,32 +63,23 @@ Run locally
 
 1. Clone this [git repo](https://github.com/mslinn/hanuman).
 
-2. Set the environment variables:
-
-        export PORT=8585
-        export MONGOLAB_URI=mongodb://127.0.0.1:27017/hello
-
-3. Compile the app and create a start script:
+2. Compile the app and create a start script:
 
         sbt stage
 
-4. Run the app:
+3. Run the app:
 
         sbt run
-
-5. In another shell, test the app:
-
-        ./test
 
 
 Run clients against local service instance
 ------------------------------------------
 
-JSON service (without the correct `Content-Type header` there will be no response).
+1. JSON service (without the correct `Content-Type header` there will be no response).
 
         curl --header "Content-Type:application/json" http://localhost:8585/json
 
-The test script fully exercises the Hanuman web API.
+2. The ````test```` script fully exercises the Hanuman web API.
 
 Run on Heroku
 -------------
@@ -101,18 +92,22 @@ You can deploy it to your own Heroku app instance this way:
 
 2. Install the [Heroku client](http://toolbelt.herokuapp.com/) and set up ssh keys.
 
+3. Authenticate with Heroku:
+
         heroku login
 
-3. Create an app instance on Heroku:
+4. Create your new app instance on Heroku:
 
         heroku create --stack cedar --addons mongolab:starter
 
-4. Push the app to Heroku; it will automatically be (re)built and run. Substitute your Heroku app instance for ````strong-galaxy-4334````
+5. Add your Heroku app instance as a remote git repository:
 
         git remote add heroku git@heroku.com:strong-galaxy-4334.git
+
+6. Push the Hanuman app to Heroku; it will automatically be (re)built and run. Substitute your Heroku app instance for ````strong-galaxy-4334````
+
         git push heroku master
 
-
-You can also manually run the sbt console on Heroku:
+   You can also manually run the ````sbt```` console on Heroku:
 
     heroku run sbt console
