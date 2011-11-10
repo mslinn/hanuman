@@ -101,7 +101,6 @@ trait HanumanService extends BlueEyesServiceBuilder
         new Hanuman(simulationID, Configuration().workCellsPerVisor, Configuration().maxTicks, document, simulationStatusRef)))
 
       Future.sync(HttpResponse(
-        /*headers = HttpHeaders.Empty + sessionCookie(simulationID),*/
         content = Some(simulationID)))
     } else {
       val msg = "The only operation that can be without a simulationID is newSimulation. You specified '" + operation + "'"
@@ -114,7 +113,6 @@ trait HanumanService extends BlueEyesServiceBuilder
     val simulationID = request.parameters('id).toString
     val simulation = simulationStatus.getSimulation(simulationID)
     Future.sync(HttpResponse(
-      /*headers = HttpHeaders.Empty + sessionCookie(simulationID),*/
       content = Some(if (simulation==None) {
         "Simulation with ID " + simulationID + " does not exist"
       } else
@@ -128,7 +126,6 @@ trait HanumanService extends BlueEyesServiceBuilder
     val param = request.parameters('param)
     val simulation = simulationStatus.getSimulation(simulationID)
     Future.sync(HttpResponse(
-      /*headers = HttpHeaders.Empty + sessionCookie(simulationID),*/
       content = if (simulation==None)
         Some("Simulation with ID " + simulationID + " does not exist")
       else
@@ -144,41 +141,26 @@ trait HanumanService extends BlueEyesServiceBuilder
         "Updated simulationStatus with new Hanuman instance " + hanumanRef.id + " and started hanuman"
 
       case "status" =>
-        /** Return status of simulation with given simulationID */
-        val simulation = simulationStatusRef.get.simulations(simulationID)
-        val result:JArray = JArray({
-          for (kv <- simulation) // Iterable[TextMatch]
-            yield kv._2.decompose
-        }.toList)
-
-        val jField  = JField("result", result)
-        val jObject = JObject(jField :: Nil)
-        jObject
+        simulationStatusAsJson(simulationID)
 
       case "stop" =>
         val hanumanRef = hanumanRefOption.get
         val future = hanumanRef ? "stop"
         future.await // block until hanuman shuts down
-        simulationStatus = future.result.get.asInstanceOf[SimulationStatus] // TODO return proper result
-        // TODO return simulationStatus object in JSON format to client
-        //simulationStatus = simulationStatusRef.get
-        "Simulation " + simulationID + " stopped"
+        simulationStatusAsJson(simulationID)
 
       case _ =>
-        command + "is an unknown command"
+        command + " is an unknown command"
     }
   }
 
-   /** BlueEyes cookie support is not fully baked */
-  /*private def sessionCookie(simulationID:String) = {
-    val cookie = new HttpCookie {
-      def name = "SessionID"
-      def cookieValue = simulationID
-      def expires = Some(HttpDateTime.parseHttpDateTimes("MON, 01-JAN-2001 00:00:00 UTC"))
-      def domain = Option("")
-      def path = Option("")
-      // TODO add "; HttpOnly"
-    }
-    `Set-Cookie`(cookie :: Nil)
-  }*/
+  /** Return status of simulation with given simulationID */
+  private def simulationStatusAsJson(simulationID:String) = {
+    val simulation = simulationStatusRef.get.simulations(simulationID)
+    val result:JArray = JArray({
+      for (kv <- simulation) // Iterable[TextMatch]
+        yield kv._2.decompose
+    }.toList)
+    JObject(JField("result", result) :: Nil)
+  }
 }
