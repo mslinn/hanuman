@@ -26,6 +26,13 @@ echo -e "\nHanuman simulation ID is $SIMULATION_ID"
 MSG=$(curl -sSf --header "Content-Type:application/json" "$DOMAIN/json/run/$SIMULATION_ID")
 echo -e "\n$(removeQuotes $MSG)"
 
+while true; do 
+  MSG=$(curl -sSf --header "Content-Type:application/json" "$DOMAIN/json/status/$SIMULATION_ID")
+  echo -e "\n$(removeQuotes $MSG)"
+  sleep 3
+  if [ "$(echo "$MSG"|grep stopped)" ]; then exit; fi
+done
+
 # Causes https://github.com/jdegoes/blueeyes/issues/29
 #MSG=$(curl -sSv --header "Content-Type:application/json" --data-urlencode "document=Of course you realize that this means war" "$DOMAIN/json/blah/$SIMULATION_ID")
 #echo "$(removeQuotes $MSG)"

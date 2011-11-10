@@ -148,7 +148,7 @@ trait HanumanService extends BlueEyesServiceBuilder
         val simulation = simulationStatusRef.get.simulations(simulationID)
         val result:JArray = JArray({
           for (kv <- simulation) // Iterable[TextMatch]
-            yield JString(kv._2.toString())
+            yield kv._2.decompose
         }.toList)
 
         val jField  = JField("result", result)
