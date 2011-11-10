@@ -2,7 +2,7 @@ package net.interdoodle.hanuman.domain
 
 import akka.actor.ScalaActorRef
 import net.interdoodle.hanuman.Configuration
-import net.interdoodle.hanuman.message.TextMatch
+import net.interdoodle.hanuman.message.{NoMatch, TextMatch}
 
 
 /**
@@ -10,7 +10,7 @@ import net.interdoodle.hanuman.message.TextMatch
 abstract class Critic {
   var document = ""
   private var lastTextMatch = new TextMatch(null, 0, 0, 0)
-  protected val minimumMatchLength = Configuration().workCellsPerVisor
+  protected val minimumMatchLength = Configuration().minimumMatchLength
   var self:ScalaActorRef = null
 
   /** Set by subclass */
@@ -23,13 +23,12 @@ abstract class Critic {
   }
 
   /** Subclass must calculate match and figure out what to send */
-  def takeAction() {
+  private def takeAction() {
     if (textMatch.length>lastTextMatch.length && textMatch.length>=minimumMatchLength) {
       if (self!=null && self.supervisor!=null)
         self.supervisor ! textMatch
-      else
-        self.supervisor ! "noMatch"
       lastTextMatch = textMatch
-    }
+    } else if (self!=null && self.supervisor!=null)
+      self.supervisor ! NoMatch(self)
   }
 }

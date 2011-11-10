@@ -23,13 +23,35 @@ trait HanumanService extends BlueEyesServiceBuilder
   with BijectionsChunkString
   with BijectionsChunkJson {
 
-  var hanuman:Option[Hanuman] = None
-  var hanumanRefOption:Option[ActorRef] = None
-  val simulations:Simulations = new Simulations()
+  private var hanuman:Option[Hanuman] = None
+  private var hanumanRefOption:Option[ActorRef] = None
+  private val simulations:Simulations = new Simulations()
 
   /** Contains simulationID->Option[WorkVisorRef] map */
-  var simulationStatus = new SimulationStatus(false, None, simulations)
-  val simulationStatusRef = new Ref(simulationStatus)
+  private var simulationStatus = new SimulationStatus(false, None, simulations)
+  private val simulationStatusRef = new Ref(simulationStatus)
+
+  private val statusContent = """<!DOCTYPE html>
+            <html xmlns="http://www.w3.org/1999/xhtml">
+              <head>
+                <script type="text/javascript" src="http://code.jquery.com/jquery-1.7.min.js"></script>
+                <script type="text/javascript">
+                  $(function() {
+                    $.ajax("/json", {
+                      contentType: "application/json",
+                      success: function(data) {
+                        $("#result").append(data.result);
+                      }
+                    });
+                  });
+                </script>
+              </head>
+              <body>
+                <h1>Status</h1>
+                <div id="result">
+                </div>
+              </body>
+            </html>""";
 
   val versionMajor = 0
   val versionMinor = 1
@@ -74,6 +96,7 @@ trait HanumanService extends BlueEyesServiceBuilder
       val simulationID = UUID.randomUUID().toString
       simulationStatus.putSimulation(simulationID, new TextMatchMap())
       simulationStatusRef.set(simulationStatus)
+      // Future simulation parameters might include workCellsPerVisor and maxTicks so pass those values to Hanuman
       hanumanRefOption = Some(Actor.actorOf(
         new Hanuman(simulationID, Configuration().workCellsPerVisor, Configuration().maxTicks, document, simulationStatusRef)))
 
@@ -123,15 +146,22 @@ trait HanumanService extends BlueEyesServiceBuilder
       case "status" =>
         /** Return status of simulation with given simulationID */
         val simulation = simulationStatusRef.get.simulations(simulationID)
-        val result = for (kv <- simulation) // Iterable[TextMatch]
-            yield (kv._2).toString()
-        return result.toString()
+        val result:JArray = JArray({
+          for (kv <- simulation) // Iterable[TextMatch]
+            yield JString(kv._2.toString())
+        }.toList)
+
+        val jField  = JField("result", result)
+        val jObject = JObject(jField :: Nil)
+        jObject
 
       case "stop" =>
         val hanumanRef = hanumanRefOption.get
-        hanumanRef ? "stop" // block until hanuman shuts down
+        val future = hanumanRef ? "stop"
+        future.await // block until hanuman shuts down
+        simulationStatus = future.result.get.asInstanceOf[SimulationStatus] // TODO return proper result
         // TODO return simulationStatus object in JSON format to client
-        simulationStatus = simulationStatusRef.get
+        //simulationStatus = simulationStatusRef.get
         "Simulation " + simulationID + " stopped"
 
       case _ =>

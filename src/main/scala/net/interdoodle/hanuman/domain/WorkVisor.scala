@@ -1,11 +1,12 @@
 package net.interdoodle.hanuman.domain
 
-import akka.actor.Actor
 import akka.config.Supervision.{OneForOneStrategy, Permanent}
 import akka.event.EventHandler
 import net.interdoodle.hanuman.domain.Hanuman.TextMatchMapRef
 import net.interdoodle.hanuman.message._
+import scala.collection.mutable.HashSet
 import scala.collection.JavaConversions._
+import akka.actor.{ActorRef, Actor}
 
 
 /** WorkCell supervisor manages simulation. It sends a TypingRequest to each WorkCell every tick.
@@ -17,9 +18,9 @@ class WorkVisor(val simulationID:String,
                   val document:String,
                   val workCellsPerVisor:Int,
                   val textMatchMapRef:TextMatchMapRef) extends Actor {
-  val documentLength = document.length()
+  private val documentLength = document.length()
 
-  val letterProbability = new LetterProbabilities()
+  private val letterProbability = new LetterProbabilities()
   letterProbability.add(document)
   letterProbability.computeValues()
 
@@ -27,11 +28,11 @@ class WorkVisor(val simulationID:String,
   self.faultHandler = OneForOneStrategy(List(classOf[Throwable]), 5, 5000)
 
   /** WorkVisors keep simulationStatus up to date so supervisor does not have to worry about maintaining it */
-  var running = false
-  var tickNumber = 1
+  private var running = false
+  private var tickNumber = 1
 
-  /** Keep track of busy WorkCells */
-  var workingCells = Set.empty
+  /** Keep track of busy WorkCells for each tick */
+  private var workingCells = HashSet[ActorRef]().empty
 
 
   /** If any monkey finishes, we are done */
@@ -56,29 +57,22 @@ class WorkVisor(val simulationID:String,
       EventHandler.debug(this, "Simulation tick #" + tickNumber.toString())
       tick // until this WorkVisor instance is stopped
       tickNumber += 1
-    } else
+    } else {
       for (workCell <- self.linkedActors.values()) // end simulation
         workCell ! "stop"
+    }
   }
 
   /** Cause each Monkey to generate a page of semi-random text */
   private def tick {
-    for (workCellActorRef <- self.linkedActors.values()) {
-      workingCells += workCellActorRef
-      workCellActorRef ! TypingRequest(workCellActorRef)
+    for (workCellRef <- self.linkedActors.values()) {
+      workingCells += workCellRef
+      EventHandler.debug(this, "tick " + tickNumber + "; " + workingCells.size + "; " + "workingCells")
+      workCellRef ! TypingRequest(workCellRef)
     }
   }
 
   def receive = {
-    case "generatePages" =>
-      EventHandler.debug(this, "WorkVisor received 'generatePages' message")
-      generatePages()
-
-    case NoMatch(workCellActorRef) =>
-      workingCells -= workCellActorRef
-      if (workingCells.size==0)
-        checkTick
-
     case "stop" =>
       EventHandler.debug(this, "WorkVisor received 'stop' message")
       running = false
@@ -93,19 +87,28 @@ class WorkVisor(val simulationID:String,
         self.supervisor ! "stopped"
       }
 
+    case NoMatch(workCellRef) =>
+      workingCells -= workCellRef
+      EventHandler.debug(this, "tick " + tickNumber, workingCells.size + "; " + "workingCells (no match)")
+      if (workingCells.size==0)
+        checkTick
+
     case TextMatch(workCellRef, matchLength, matchStart, matchEnd) =>
       EventHandler.debug(this, workCellRef.uuid + " matched " + matchLength + " characters from " + matchStart + " to " + matchEnd)
       val textMatchMap = textMatchMapRef.get
       textMatchMap += workCellRef.uuid -> TextMatch(workCellRef, matchLength, matchStart, matchEnd)
       textMatchMapRef.set(textMatchMap)
-      if (matchLength==documentLength) { // success!
+      if (matchLength==documentLength) { // success! This has a very low probability of happening
         running = false
         self.supervisor ! DocumentMatch(workCellRef, matchStart)
+      } else {
+        workingCells -= workCellRef
+        EventHandler.debug(this, "tick " + tickNumber + "; " + workingCells.size + "; " + "workingCells (match)")
+        if (workingCells.size==0)
+          checkTick
       }
-      if (workingCells.size==0)
-        checkTick
 
     case _ =>
-      EventHandler.info(this, "WorkVisor received an unknown message")
+      EventHandler.debug(this, "WorkVisor received an unknown message")
   }
 }

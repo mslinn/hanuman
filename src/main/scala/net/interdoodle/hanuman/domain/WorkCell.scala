@@ -13,11 +13,11 @@ class WorkCell[C <: Critic](val document:String, val letterProbability:LetterPro
                            (val criticFactory:() => C) extends Actor {
   self.lifeCycle = Permanent
 
-  val critic = criticFactory()
+  private val critic = criticFactory()
   critic.self = self
   critic.document = document
 
-  val monkey = new Monkey(letterProbability)
+  private val monkey = new Monkey(letterProbability)
 
 
 
@@ -29,12 +29,17 @@ class WorkCell[C <: Critic](val document:String, val letterProbability:LetterPro
 
   def receive = {
     case "stop" =>
-      self.supervisor ! "stopped"
+      if (self.linkedActors.size()==0)
+        self.supervisor ! "stopped"
 
     case TypingRequest(workCellRef) =>
-      EventHandler.debug(this, workCellRef.uuid + " received TypingRequest")
-      var page = monkey.generatePage
-      critic.assessText(document, workCellRef, monkey.generatedText, page) // notifies WorkVisor of passage match if necessary
+      try {
+        EventHandler.debug(this, workCellRef.uuid + " received TypingRequest")
+        val page = monkey.generatePage
+        critic.assessText(document, workCellRef, monkey.generatedText, page) // notifies WorkVisor of passage match if necessary
+      } catch {
+        case e:Exception => EventHandler.debug(this, e.toString)
+      }
 
     case _ =>
       EventHandler.info(this, "WorkCell received an unknown message: " + self)

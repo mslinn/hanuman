@@ -4,7 +4,7 @@ import akka.actor.Actor
 import akka.event.EventHandler
 import akka.stm.Ref
 import collection.mutable.HashMap
-import net.interdoodle.hanuman.domain.Hanuman.TextMatchMapRef
+import net.interdoodle.hanuman.domain.Hanuman.{TextMatchMap, TextMatchMapRef}
 import net.interdoodle.hanuman.message._
 import scala.collection.JavaConversions._
 import akka.actor.Uuid
@@ -13,12 +13,15 @@ import akka.actor.Uuid
 /** Monkey god (supervises simulations/Monkey supervisors)
  * @author Mike Slinn */
 class Hanuman(val simulationID:String,
+              val workCellsPerVisor:Int,
               val maxTicks:Int,
-              val monkeysPerVisor:Int,
               val document:String,
               val simulationStatusRef:Ref[SimulationStatus]) extends Actor {
-  var simulationStatus = simulationStatusRef.get
   val textMatchMapRef = new TextMatchMapRef()
+  var textMatchMap = new TextMatchMap()
+  textMatchMapRef.set(textMatchMap)
+  var simulationStatus = simulationStatusRef.get
+  simulationStatus.putSimulation(simulationID, textMatchMap)
 
 
   override def postStop() {
@@ -26,14 +29,6 @@ class Hanuman(val simulationID:String,
 
   override def preStart() {
     createWorkVisor()
-  }
-
-  def createWorkVisor() {
-    val workVisorRef = Actor.actorOf(
-      new WorkVisor(simulationID, maxTicks, document, monkeysPerVisor, textMatchMapRef))
-    simulationStatus.putSimulation(simulationID, textMatchMapRef.get)
-    self.link(workVisorRef)
-    workVisorRef.start()
   }
 
   def receive = {
@@ -58,6 +53,13 @@ class Hanuman(val simulationID:String,
 
     case _ =>
       EventHandler.info(this, "Hanuman received an unknown message")
+  }
+
+  private def createWorkVisor() {
+    val workVisorRef = Actor.actorOf(
+      new WorkVisor(simulationID, maxTicks, document, workCellsPerVisor, textMatchMapRef))
+    self.link(workVisorRef)
+    workVisorRef.start()
   }
 }
 
