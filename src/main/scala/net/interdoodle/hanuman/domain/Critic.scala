@@ -27,6 +27,8 @@ abstract class Critic {
     if (textMatch.length>lastTextMatch.length && textMatch.length>=minimumMatchLength) {
       if (self!=null && self.supervisor!=null)
         self.supervisor ! textMatch
+      else
+        self.supervisor ! "noMatch"
       lastTextMatch = textMatch
     }
   }
