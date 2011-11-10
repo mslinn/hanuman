@@ -24,13 +24,13 @@ class SimpleCriticSuite extends FunSuite {
   }
 
   test("assessText") {
-    sCritic.assessText(document, null, "", "ab")
+    sCritic.assessText(document, null, "ab")
     assert(sCritic.textMatch===TextMatch(null, 2, 0, 2))
 
-    sCritic.assessText(document, null, "", "_abcd_")
+    sCritic.assessText(document, null, "_abcd_")
     assert(sCritic.textMatch===TextMatch(null, 4, 1, 5))
 
-    sCritic.assessText(document, null, "", "ab_ab__abcd_abcdefgh")
+    sCritic.assessText(document, null, "ab_ab__abcd_abcdefgh")
     assert(sCritic.textMatch===TextMatch(null, 8, 12, 20))
   }
 }

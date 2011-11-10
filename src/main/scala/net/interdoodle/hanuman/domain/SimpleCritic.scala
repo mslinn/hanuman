@@ -9,25 +9,26 @@ import net.lag.logging.Logger
  * @author Mike Slinn */
 class SimpleCritic extends Critic {
   private val log = Logger.get
-  private var strPos = 0
 
 
-  /* TODO Optimize by not rescanning textSoFar and scanning page, possibly continuing previous scan if textSoFar ended
-     in a match */
-  override def assessText(document:String, monkeyRef:ScalaActorRef, textSoFar:String, page:String) {
-    val generatedText = textSoFar + page
-    val docMatches = for (i <- 0 to generatedText.length;
-      val len = matchLen(document, generatedText.substring(i)) if len>0
-    ) yield TextMatch(monkeyRef, len, i, len + i)
+  override def assessText(document:String, monkeyRef:ScalaActorRef, page:String) {
+    val docMatches = for (i <- 0 to page.length;
+      val len = matchLen(document, page.substring(i)) if len>0
+    ) yield TextMatch(monkeyRef, carriedMatchLength+len, i+prevPageLengths, len + i)
     // REPL accepts: docMatches.toList.map {s => (s.length, s)} sortBy(_._1) head
     // ...but Scala compiler does not
     log.debug("docMatches", docMatches)
-    val longestMatch = docMatches.map{s => (s.length, s)}
+    val longestMatch = docMatches.map{ s => (s.length, s) }
     log.debug("longestMatch", longestMatch)
+    prevPageLengths += page.length()
     if (longestMatch.size>0) {
       textMatch = longestMatch.sortBy(_._1).last._2 // side effect, bad dog!
       log.debug("textMatch", textMatch)
-      super.assessText(document, monkeyRef, textSoFar, page)
+      carriedMatchLength = if (textMatch.endPos==page.length()-1) // match might continue into next page
+        textMatch.length
+      else
+        0
+      super.assessText(document, monkeyRef, page)
     }
   }
 

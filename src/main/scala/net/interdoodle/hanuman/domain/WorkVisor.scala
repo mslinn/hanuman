@@ -89,7 +89,7 @@ class WorkVisor(val simulationID:String,
 
     case NoMatch(workCellRef) =>
       workingCells -= workCellRef
-      EventHandler.debug(this, "tick " + tickNumber, workingCells.size + "; " + "workingCells (no match)")
+      EventHandler.debug(this, "tick " + tickNumber + "; " + workingCells.size + "; " + "workingCells (no match)")
       if (workingCells.size==0)
         checkTick
 

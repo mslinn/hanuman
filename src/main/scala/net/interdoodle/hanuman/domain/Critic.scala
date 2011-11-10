@@ -13,12 +13,18 @@ abstract class Critic {
   protected val minimumMatchLength = Configuration().minimumMatchLength
   var self:ScalaActorRef = null
 
+  /** Length of previous match if it extended to the end of the page. Set by subclass */
+  protected var carriedMatchLength = 0
+
+  /** Number of characters generated in all previous pages */
+  protected var prevPageLengths = 0
+
   /** Set by subclass */
   protected[domain] var textMatch = new TextMatch(null, 0, 0, 0)
 
 
   /** Update textMatch; subclass must call super.assessText() as last line of this overridden method */
-  def assessText(document:String, monkeyRef:ScalaActorRef, textSoFar:String, page:String) {
+  def assessText(document:String, monkeyRef:ScalaActorRef, page:String) {
     takeAction()
   }
 

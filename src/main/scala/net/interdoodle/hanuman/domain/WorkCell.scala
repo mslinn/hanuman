@@ -24,7 +24,6 @@ class WorkCell[C <: Critic](val document:String, val letterProbability:LetterPro
   // TODO register with WorkVisor after restart
 
   override def preStart() {
-    monkey.generatedText = ""
   }
 
   def receive = {
@@ -36,7 +35,7 @@ class WorkCell[C <: Critic](val document:String, val letterProbability:LetterPro
       try {
         EventHandler.debug(this, workCellRef.uuid + " received TypingRequest")
         val page = monkey.generatePage
-        critic.assessText(document, workCellRef, monkey.generatedText, page) // notifies WorkVisor of passage match if necessary
+        critic.assessText(document, workCellRef, page) // notifies WorkVisor of passage match if necessary
       } catch {
         case e:Exception => EventHandler.debug(this, e.toString)
       }
