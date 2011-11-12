@@ -33,7 +33,7 @@ class SimpleCritic extends Critic {
 
   /** @return number of common chars at start of document and str */
   protected[domain] def matchLen(document:String, str:String):Int = {
-    val upperLimit = Math.min(document.length, str.length)
+    val upperLimit = scala.math.min(document.length, str.length)
     for (i <- 0 until upperLimit) {
       if (document.charAt(i)!=str.charAt(i))
           return i
