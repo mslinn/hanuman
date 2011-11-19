@@ -2,13 +2,16 @@ package net.interdoodle.hanuman
 
 import akka.actor.{ActorRef, Actor}
 import akka.stm.Ref
-import blueeyes._
+
+import blueeyes.BlueEyesServiceBuilder
 import blueeyes.concurrent.Future
 import blueeyes.core.data.{BijectionsChunkJson, BijectionsChunkString, ByteChunk}
 import blueeyes.core.http.{HttpRequest, HttpResponse, HttpStatus, HttpStatusCodes}
 import blueeyes.core.http.combinators.HttpRequestCombinators
+import blueeyes.core.http.MimeTypes._
+import blueeyes.core.service.{HttpService, HttpServiceContext}
 import blueeyes.json.JsonAST._
-import core.service._
+
 import java.util.UUID
 import net.interdoodle.hanuman.message.SimulationStatus
 import net.interdoodle.hanuman.domain.Hanuman
@@ -31,27 +34,16 @@ trait HanumanService extends BlueEyesServiceBuilder
   private var simulationStatus = new SimulationStatus(false, None, simulations)
   private val simulationStatusRef = new Ref(simulationStatus)
 
-  private val statusContent = """<!DOCTYPE html>
-            <html xmlns="http://www.w3.org/1999/xhtml">
-              <head>
-                <script type="text/javascript" src="http://code.jquery.com/jquery-1.7.min.js"></script>
-                <script type="text/javascript">
-                  $(function() {
-                    $.ajax("/json", {
-                      contentType: "application/json",
-                      success: function(data) {
-                        $("#result").append(data.result);
-                      }
-                    });
-                  });
-                </script>
-              </head>
-              <body>
-                <h1>Status</h1>
-                <div id="result">
-                </div>
-              </body>
-            </html>""";
+  private val contentUrl = System.getenv("CONTENT_URL")
+
+  private val staticContent = <html xmlns="http://www.w3.org/1999/xhtml">
+                                <head>
+                                  <script type="text/javascript" src={contentUrl + "jquery-1.7.min.js"}></script>
+                                  <script type="text/javascript" src={contentUrl + "index.js"}></script>
+                                </head>
+                                <body>
+                                </body>
+                              </html>
 
   val versionMajor = 0
   val versionMinor = 1
@@ -62,8 +54,8 @@ trait HanumanService extends BlueEyesServiceBuilder
         log =>
           context: HttpServiceContext =>
             request {
-              path("/json/") {
-                jvalue {
+              path("/") {
+                contentType(application/json) {
                   get { requestParam:HttpRequest[JValue] => reqHello(log) } ~
                   path('operation) {
                     get { request => reqOperation(log, request) }
@@ -75,6 +67,10 @@ trait HanumanService extends BlueEyesServiceBuilder
                     get { request => reqDoCommandParam(log, request) }
                   } ~
                   orFail(HttpStatusCodes.NotFound, "No handler found that could handle this request.") // return HTTP status 404
+                } ~
+                produce(text/html) {
+                  request: HttpRequest[ByteChunk] =>
+                    Future.sync(HttpResponse[String](content = Some(staticContent.buildString(true))))
                 }
               }
             }
@@ -100,8 +96,7 @@ trait HanumanService extends BlueEyesServiceBuilder
       hanumanRefOption = Some(Actor.actorOf(
         new Hanuman(simulationID, Configuration().workCellsPerVisor, Configuration().maxTicks, document, simulationStatusRef)))
 
-      Future.sync(HttpResponse(
-        content = Some(simulationID)))
+      Future.sync(HttpResponse(content = Some(JObject(List(JField("id", simulationID))))))
     } else {
       val msg = "The only operation that can be without a simulationID is newSimulation. You specified '" + operation + "'"
       Future.sync(HttpResponse(status=HttpStatus(400, msg), content = Some(msg)))
@@ -138,7 +133,7 @@ trait HanumanService extends BlueEyesServiceBuilder
       case "run" =>
         val hanumanRef = hanumanRefOption.get
         hanumanRef.start
-        "Updated simulationStatus with new Hanuman instance " + hanumanRef.id + " and started hanuman"
+        JObject(List(JField("result", "Updated simulationStatus with new Hanuman instance " + hanumanRef.id + " and started hanuman")))
 
       case "status" =>
         simulationStatusAsJson(simulationID)

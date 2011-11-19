@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash/json
 
 # Test Hanuman Service locally or at a specified URL
 # Sample usage:
@@ -13,26 +13,26 @@ function removeQuotes {
 DOMAIN=http://localhost:8585
 if [ "$1" ]; then DOMAIN="$1"; fi
 
-VER=$(curl -sSf --header "Content-Type:application/json" "$DOMAIN/json/")
+VER=$(curl -sSf --header "Content-Type:application" "$DOMAIN/")
 echo "Should show Hanuman version: $VER"
 
 echo -en "\nShould report return code 22 because of HTTP status 404: "
-BAD=$(curl -sSf --header "Content-Type:application/json" "$DOMAIN/json/badURI/x/y/z/")
+BAD=$(curl -sSf --header "Content-Type:application" "$DOMAIN/badURI/x/y/z/")
 
-SID=$(curl -sSf --header "Content-Type:application/json" "$DOMAIN/json/newSimulation")
+SID=$(curl -sSf --header "Content-Type:application" "$DOMAIN/newSimulation")
 SIMULATION_ID=$(removeQuotes $SID)
 echo -e "\nHanuman simulation ID is $SIMULATION_ID"
 
-MSG=$(curl -sSf --header "Content-Type:application/json" "$DOMAIN/json/run/$SIMULATION_ID")
+MSG=$(curl -sSf --header "Content-Type:application" "$DOMAIN/run/$SIMULATION_ID")
 echo -e "\n$(removeQuotes $MSG)"
 
 while true; do 
-  MSG=$(curl -sSf --header "Content-Type:application/json" "$DOMAIN/json/status/$SIMULATION_ID")
+  MSG=$(curl -sSf --header "Content-Type:application" "$DOMAIN/status/$SIMULATION_ID")
   echo -e "\n$(removeQuotes $MSG)"
   sleep 3
   if [ "$(echo "$MSG"|grep stopped)" ]; then exit; fi
 done
 
 # Causes https://github.com/jdegoes/blueeyes/issues/29
-#MSG=$(curl -sSv --header "Content-Type:application/json" --data-urlencode "document=Of course you realize that this means war" "$DOMAIN/json/blah/$SIMULATION_ID")
+#MSG=$(curl -sSv --header "Content-Type:application" --data-urlencode "document=Of course you realize that this means war" "$DOMAIN/blah/$SIMULATION_ID")
 #echo "$(removeQuotes $MSG)"
