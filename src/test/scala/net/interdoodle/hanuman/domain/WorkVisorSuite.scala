@@ -20,7 +20,7 @@ class WorkVisorSuite extends FunSuite {
     val textMatchMapRef = new TextMatchMapRef()
     textMatchMapRef.set(textMatchMap)
     val simulations:Simulations = new Simulations()
-    val simulationStatusRef = Ref(new SimulationStatus(false, None, simulations))
+    val simulationStatusRef = Ref(new SimulationStatus(false, simulations))
 
     /** Rough character frequency approximation */
     val document = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"*5 +

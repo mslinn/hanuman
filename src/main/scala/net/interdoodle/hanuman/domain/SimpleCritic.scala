@@ -22,12 +22,12 @@ class SimpleCritic extends Critic {
     log.debug("longestMatch", longestMatch)
     prevPageLengths += page.length()
     if (longestMatch.size>0) {
-      textMatch = longestMatch.sortBy(_._1).last._2 // side effect, bad dog!
-      log.debug("textMatch", textMatch)
-      carriedMatchLength = if (textMatch.endPos==page.length()-1) // match might continue into next page
-        textMatch.length
+      carriedMatchLength = if (longestMatch.last._2.endPos==page.length()-1) // match might continue into next page
+        longestMatch.length
       else
         0
+      textMatch = longestMatch.sortBy(_._1).last._2 // side effect, bad dog!
+      log.debug("textMatch", textMatch)
       super.assessText(document, monkeyRef, page)
     }
   }

@@ -33,22 +33,21 @@ class Hanuman(val simulationID:String,
 
   def receive = {
     case DocumentMatch(workUnitRef, startIndex) =>
-      // TODO summarize
-      //simulationStatus.put(workUnitRef.uuid, ??)
       simulationStatusRef.set(simulationStatus)
       EventHandler.debug(this, "Hanuman is done")
 
     case "stop" =>
       EventHandler.debug(this, "Hanuman received a stop message")
-      for (workVisorRef <- self.linkedActors.values()) {
-        workVisorRef.stop() // workVisor's postStop() also stops linked WorkCells
-        self.unlink(workVisorRef)
-      }
+      for (workVisorRef <- self.linkedActors.values())
+        workVisorRef ! "stop"
 
     case "stopped" =>
       EventHandler.debug(this, "Hanuman received a 'stopped' message from a WorkVisor")
-      if (self.linkedActors.size()==0) { // MonkeyVisor already summarized its simulation
+      self.unlink(self.sender.get)
+      if (self.linkedActors.size()==0) { // WorkVisors are all stopped
         //self.stop() // Keep Hanuman running
+        val ss = new SimulationStatus(true, simulationStatusRef.get.simulations)
+        simulationStatusRef.set(ss)
       }
 
     case _ =>

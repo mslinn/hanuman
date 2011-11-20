@@ -23,14 +23,7 @@ class WorkCell[C <: Critic](val document:String, val letterProbability:LetterPro
 
   // TODO register with WorkVisor after restart
 
-  override def preStart() {
-  }
-
   def receive = {
-    case "stop" =>
-      if (self.linkedActors.size()==0)
-        self.supervisor ! "stopped"
-
     case TypingRequest(workCellRef) =>
       try {
         EventHandler.debug(this, workCellRef.uuid + " received TypingRequest")

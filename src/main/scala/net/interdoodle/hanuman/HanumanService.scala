@@ -31,7 +31,7 @@ trait HanumanService extends BlueEyesServiceBuilder
   private val simulations:Simulations = new Simulations()
 
   /** Contains simulationID->Option[WorkVisorRef] map */
-  private var simulationStatus = new SimulationStatus(false, None, simulations)
+  private var simulationStatus = new SimulationStatus(false, simulations)
   private val simulationStatusRef = new Ref(simulationStatus)
 
   private val contentUrl = System.getenv("CONTENT_URL")
@@ -128,28 +128,26 @@ trait HanumanService extends BlueEyesServiceBuilder
     )
   }
 
-  private def doCommand(log:Logger, command:String, simulationID:String):JValue = {
-    command match {
-      case "run" =>
-        val hanumanRef = hanumanRefOption.get
-        hanumanRef.start
-        JObject(List(JField("result", "Updated simulationStatus with new Hanuman instance " + hanumanRef.id + " and started hanuman")))
+  private def doCommand(log:Logger, command:String, simulationID:String):JValue = command match {
+    case "run" =>
+      val hanumanRef = hanumanRefOption.get
+      hanumanRef.start
+        JObject(List(JField("result", "Updated simulationStatus with new Hanuman instance " + hanumanRef.uuid + " and started hanuman")))
 
-      case "status" =>
-        simulationStatusAsJson(simulationID)
+    case "status" =>
+      simulationStatusAsJson(simulationID)
 
-      case "stop" =>
-        val hanumanRef = hanumanRefOption.get
-        val future = hanumanRef ? "stop"
-        future.await // block until hanuman shuts down
-        simulationStatusAsJson(simulationID)
+    case "stop" =>
+      val hanumanRef = hanumanRefOption.get
+      val future = hanumanRef ? "stop"
+      future.await // block until hanuman shuts down
+      simulationStatusAsJson(simulationID)
 
-      case _ =>
-        command + " is an unknown command"
-    }
+    case _ =>
+      command + " is an unknown command"
   }
 
-  /** Return status of simulation with given simulationID */
+  /** @return status of simulation with given simulationID */
   private def simulationStatusAsJson(simulationID:String) = {
     val simulation = simulationStatusRef.get.simulations(simulationID)
     val result = JArray({

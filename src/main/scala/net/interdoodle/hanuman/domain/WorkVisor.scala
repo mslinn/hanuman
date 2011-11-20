@@ -38,7 +38,7 @@ class WorkVisor(val simulationID:String,
   /** If any monkey finishes, we are done */
   override def postStop() {
     EventHandler.debug(this, "Simulation stopped")
-    // TODO how to delete WorkCell?
+    workingCells.empty // should already be empty; no refs to WorkCells means they will be GC'd
   }
 
   override def preStart() {
@@ -58,11 +58,19 @@ class WorkVisor(val simulationID:String,
       tick // until this WorkVisor instance is stopped
       tickNumber += 1
     } else {
-      for (workCell <- self.linkedActors.values()) // end simulation
-        workCell ! "stop"
+      stopWorkCells
     }
   }
 
+  private def stopWorkCells {
+    for (workCellActorRef <- self.linkedActors.values()) {
+      workCellActorRef.stop()
+      workingCells -= workCellActorRef
+      self.unlink(workCellActorRef)
+    }
+    EventHandler.debug(this, "All WorkCells have stopped")
+    self.supervisor ! "stopped"
+  }
   /** Cause each Monkey to generate a page of semi-random text */
   private def tick {
     for (workCellRef <- self.linkedActors.values()) {
@@ -76,16 +84,7 @@ class WorkVisor(val simulationID:String,
     case "stop" =>
       EventHandler.debug(this, "WorkVisor received 'stop' message")
       running = false
-      for (workCellActorRef <- self.linkedActors.values())
-        workCellActorRef ! "stop"
-
-    case "stopped" =>
-      EventHandler.debug(this, "WorkVisor received 'stopped' message")
-      self.unlink(self.sender.get)
-      if (self.linkedActors.size()==0) {
-        EventHandler.debug(this, "All WorkCells have stopped")
-        self.supervisor ! "stopped"
-      }
+      stopWorkCells
 
     case NoMatch(workCellRef) =>
       workingCells -= workCellRef
