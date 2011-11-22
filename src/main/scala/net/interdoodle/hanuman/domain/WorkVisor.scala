@@ -1,12 +1,12 @@
 package net.interdoodle.hanuman.domain
 
+import akka.actor.{ActorRef, Actor}
 import akka.config.Supervision.{OneForOneStrategy, Permanent}
 import akka.event.EventHandler
-import net.interdoodle.hanuman.domain.Hanuman.TextMatchMapRef
 import net.interdoodle.hanuman.message._
 import scala.collection.mutable.HashSet
 import scala.collection.JavaConversions._
-import akka.actor.{ActorRef, Actor}
+import types.TextMatchMapRef
 
 
 /** WorkCell supervisor manages simulation. It sends a TypingRequest to each WorkCell every tick.

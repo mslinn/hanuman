@@ -3,11 +3,9 @@ package net.interdoodle.hanuman.domain
 import akka.actor.Actor
 import akka.event.EventHandler
 import akka.stm.Ref
-import collection.mutable.HashMap
-import net.interdoodle.hanuman.domain.Hanuman.{TextMatchMap, TextMatchMapImmutable, TextMatchMapRef}
 import net.interdoodle.hanuman.message._
 import scala.collection.JavaConversions._
-import akka.actor.Uuid
+import types._
 
 
 /** Monkey god (supervises simulations/Monkey supervisors)
@@ -62,12 +60,4 @@ class Hanuman(val simulationID:String,
     self.link(workVisorRef)
     workVisorRef.start()
   }
-}
-
-object Hanuman {
-  /** map of simulation sessionID to TextMatch map */
-  type Simulations = HashMap[String, TextMatchMap]
-  type TextMatchMap = HashMap[Uuid, TextMatch]
-  type TextMatchMapImmutable = scala.collection.immutable.HashMap[Uuid, TextMatch]
-  type TextMatchMapRef = Ref[TextMatchMap]
 }

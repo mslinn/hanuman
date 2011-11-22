@@ -2,9 +2,9 @@ package net.interdoodle.hanuman.domain
 
 import akka.actor.{Actor, Uuid}
 import akka.stm.Ref
-import net.interdoodle.hanuman.domain.Hanuman.{Simulations, TextMatchMap, TextMatchMapRef}
 import net.interdoodle.hanuman.message.{SimulationStatuses, TextMatch}
 import org.scalatest.FunSuite
+import types._
 
 
 /** @see http://www.scalatest.org/scaladoc/1.6.1/#org.scalatest.FunSuite

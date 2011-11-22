@@ -1,6 +1,6 @@
 package net.interdoodle.hanuman
 
-import net.interdoodle.hanuman.domain._
+import domain.{SimpleCriticSuite, MonkeySuite, LetterProbabilitiesSuite}
 import org.scalatest.SuperSuite
 
 

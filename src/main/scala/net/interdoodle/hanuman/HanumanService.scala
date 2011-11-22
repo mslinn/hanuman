@@ -1,23 +1,23 @@
 package net.interdoodle.hanuman
 
 import akka.actor.{ActorRef, Actor}
+import akka.event.EventHandler
 import akka.stm.Ref
 
 import blueeyes.BlueEyesServiceBuilder
 import blueeyes.concurrent.Future
 import blueeyes.core.data.{BijectionsChunkJson, BijectionsChunkString, ByteChunk}
 import blueeyes.core.http.{HttpRequest, HttpResponse, HttpStatus, HttpStatusCodes}
-import blueeyes.core.http.combinators.HttpRequestCombinators
 import blueeyes.core.http.MimeTypes._
+import blueeyes.core.http.combinators.HttpRequestCombinators
 import blueeyes.core.service.{HttpService, HttpServiceContext}
 import blueeyes.json.JsonAST._
 
+import domain.types._
 import java.util.UUID
 import message.{SimulationComplete, GetSimulationStatus, TextMatch, SimulationStatuses}
 import net.interdoodle.hanuman.domain.Hanuman
-import net.interdoodle.hanuman.domain.Hanuman.{Simulations, TextMatchMap, TextMatchMapImmutable}
 import net.lag.logging.Logger
-import akka.event.EventHandler
 
 
 /**

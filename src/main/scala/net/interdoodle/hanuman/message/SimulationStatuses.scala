@@ -1,6 +1,6 @@
 package net.interdoodle.hanuman.message
 
-import net.interdoodle.hanuman.domain.Hanuman.{Simulations, TextMatchMap}
+import net.interdoodle.hanuman.domain.types._
 
 
 /**
