@@ -69,7 +69,7 @@ class WorkVisor(val simulationID:String,
       self.unlink(workCellActorRef)
     }
     EventHandler.debug(this, "All WorkCells have stopped")
-    self.supervisor ! "stopped"
+    self.supervisor ! SimulationComplete(simulationID)
   }
   /** Cause each Monkey to generate a page of semi-random text */
   private def tick {

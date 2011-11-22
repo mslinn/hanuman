@@ -13,10 +13,11 @@ import blueeyes.core.service.{HttpService, HttpServiceContext}
 import blueeyes.json.JsonAST._
 
 import java.util.UUID
-import net.interdoodle.hanuman.message.SimulationStatus
+import message.{SimulationComplete, GetSimulationStatus, TextMatch, SimulationStatuses}
 import net.interdoodle.hanuman.domain.Hanuman
-import net.interdoodle.hanuman.domain.Hanuman.{Simulations, TextMatchMap}
+import net.interdoodle.hanuman.domain.Hanuman.{Simulations, TextMatchMap, TextMatchMapImmutable}
 import net.lag.logging.Logger
+import akka.event.EventHandler
 
 
 /**
@@ -31,7 +32,7 @@ trait HanumanService extends BlueEyesServiceBuilder
   private val simulations:Simulations = new Simulations()
 
   /** Contains simulationID->Option[WorkVisorRef] map */
-  private var simulationStatus = new SimulationStatus(false, simulations)
+  private var simulationStatus = new SimulationStatuses(false, simulations)
   private val simulationStatusRef = new Ref(simulationStatus)
 
   private val contentUrl = System.getenv("CONTENT_URL")
@@ -96,6 +97,18 @@ trait HanumanService extends BlueEyesServiceBuilder
       hanumanRefOption = Some(Actor.actorOf(
         new Hanuman(simulationID, Configuration().workCellsPerVisor, Configuration().maxTicks, document, simulationStatusRef)))
 
+      /* This is one way to detect completion; it is redundant because Hanuman sets a completion flag in
+         simulationResults but I left it as an example of how a non-actor can retrieve results from an actor.
+         The handler could also shut down all actors if desired. */
+      EventHandler.addListener(Actor.actorOf(new Actor {
+        self.dispatcher = EventHandler.EventHandlerDispatcher
+
+        def receive = {
+          case SimulationComplete(simulationID) =>
+            println("Notify client that simulation " + simulationID + " is done")
+        }
+      }))
+
       Future.sync(HttpResponse(content = Some(JObject(List(JField("id", simulationID))))))
     } else {
       val msg = "The only operation that can be without a simulationID is newSimulation. You specified '" + operation + "'"
@@ -147,13 +160,19 @@ trait HanumanService extends BlueEyesServiceBuilder
       command + " is an unknown command"
   }
 
-  /** @return status of simulation with given simulationID */
+  /** @return status of simulation with given simulationID as JSON */
   private def simulationStatusAsJson(simulationID:String) = {
-    val simulation = simulationStatusRef.get.simulations(simulationID)
-    val result = JArray({
-      for (kv <- simulation) // Iterable[TextMatch]
-        yield kv._2.decompose
-    }.toList)
-    JObject(JField("result", result) :: Nil)
+    val resultOption = (hanumanRefOption.get ? GetSimulationStatus(simulationID)).await.get
+    resultOption match {
+      case Some(textMatchMap) =>
+        val result = JArray({
+            for (kv <- textMatchMap.asInstanceOf[TextMatchMap])
+              yield kv._2.decompose
+        }.toList)
+        JObject(JField("result", result) :: Nil)
+
+      case None => // time out
+        JString("result")
+    }
   }
 }

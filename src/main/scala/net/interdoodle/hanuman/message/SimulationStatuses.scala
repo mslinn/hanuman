@@ -5,7 +5,7 @@ import net.interdoodle.hanuman.domain.Hanuman.{Simulations, TextMatchMap}
 
 /**
  * @author Mike Slinn */
-case class SimulationStatus(complete:Boolean, simulations:Simulations) {
+case class SimulationStatuses(complete:Boolean, simulations:Simulations) {
   def getSimulation(simulationID:String) = {
     simulations.getOrElse(simulationID, None)
   }

@@ -4,7 +4,7 @@ import akka.actor.Actor
 import akka.event.EventHandler
 import akka.stm.Ref
 import collection.mutable.HashMap
-import net.interdoodle.hanuman.domain.Hanuman.{TextMatchMap, TextMatchMapRef}
+import net.interdoodle.hanuman.domain.Hanuman.{TextMatchMap, TextMatchMapImmutable, TextMatchMapRef}
 import net.interdoodle.hanuman.message._
 import scala.collection.JavaConversions._
 import akka.actor.Uuid
@@ -16,7 +16,7 @@ class Hanuman(val simulationID:String,
               val workCellsPerVisor:Int,
               val maxTicks:Int,
               val document:String,
-              val simulationStatusRef:Ref[SimulationStatus]) extends Actor {
+              val simulationStatusRef:Ref[SimulationStatuses]) extends Actor {
   val textMatchMapRef = new TextMatchMapRef()
   var textMatchMap = new TextMatchMap()
   textMatchMapRef.set(textMatchMap)
@@ -24,31 +24,33 @@ class Hanuman(val simulationID:String,
   simulationStatus.putSimulation(simulationID, textMatchMap)
 
 
-  override def postStop() {
-  }
-
   override def preStart() {
     createWorkVisor()
   }
 
   def receive = {
+    case GetSimulationStatus(simulationID) =>
+      EventHandler.debug(this, "Hanuman returning TextMatchMap for simulation " + simulationID)
+      self.channel ! simulationStatus.simulations.get(simulationID)
+
     case DocumentMatch(workUnitRef, startIndex) =>
-      simulationStatusRef.set(simulationStatus)
       EventHandler.debug(this, "Hanuman is done")
+      simulationStatusRef.set(simulationStatus) //FIXME return result
 
     case "stop" =>
       EventHandler.debug(this, "Hanuman received a stop message")
       for (workVisorRef <- self.linkedActors.values())
         workVisorRef ! "stop"
 
-    case "stopped" =>
+    case SimulationComplete(simulationID) =>
       EventHandler.debug(this, "Hanuman received a 'stopped' message from a WorkVisor")
       self.unlink(self.sender.get)
       if (self.linkedActors.size()==0) { // WorkVisors are all stopped
         //self.stop() // Keep Hanuman running
-        val ss = new SimulationStatus(true, simulationStatusRef.get.simulations)
+        val ss = new SimulationStatuses(true, simulationStatusRef.get.simulations)
         simulationStatusRef.set(ss)
       }
+      EventHandler.notify(SimulationComplete(simulationID))
 
     case _ =>
       EventHandler.info(this, "Hanuman received an unknown message")
@@ -66,5 +68,6 @@ object Hanuman {
   /** map of simulation sessionID to TextMatch map */
   type Simulations = HashMap[String, TextMatchMap]
   type TextMatchMap = HashMap[Uuid, TextMatch]
+  type TextMatchMapImmutable = scala.collection.immutable.HashMap[Uuid, TextMatch]
   type TextMatchMapRef = Ref[TextMatchMap]
 }

@@ -3,7 +3,7 @@ package net.interdoodle.hanuman.domain
 import akka.actor.{Actor, Uuid}
 import akka.stm.Ref
 import net.interdoodle.hanuman.domain.Hanuman.{Simulations, TextMatchMap, TextMatchMapRef}
-import net.interdoodle.hanuman.message.{SimulationStatus, TextMatch}
+import net.interdoodle.hanuman.message.{SimulationStatuses, TextMatch}
 import org.scalatest.FunSuite
 
 
@@ -20,7 +20,7 @@ class WorkVisorSuite extends FunSuite {
     val textMatchMapRef = new TextMatchMapRef()
     textMatchMapRef.set(textMatchMap)
     val simulations:Simulations = new Simulations()
-    val simulationStatusRef = Ref(new SimulationStatus(false, simulations))
+    val simulationStatusRef = Ref(new SimulationStatuses(false, simulations))
 
     /** Rough character frequency approximation */
     val document = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"*5 +
