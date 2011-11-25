@@ -176,6 +176,7 @@ trait HanumanService extends BlueEyesServiceBuilder
         val simulationStatus = result.asInstanceOf[SimulationStatus]
         val textMatch = simulationStatus.bestTextMatch
         val document = Configuration().defaultDocument
+        println(document.length, textMatch.length)
         val portionMatched = if (textMatch.length>0)
           document.substring(0, scala.math.min(document.length, textMatch.length)-1)
         else
@@ -194,6 +195,4 @@ trait HanumanService extends BlueEyesServiceBuilder
         JString("result")
     }
   }
-
-
 }

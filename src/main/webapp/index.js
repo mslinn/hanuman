@@ -15,11 +15,11 @@ $(function() {
             $("body").append('<div id="results"></div>');
             simulationId = data.id;
             $("#results").append('<h1 style="font-family: arial">Hanuman v<span id="version"></span></h1>\n');
-            $("#results").append('<b>Simulation:</b> <tt>' + simulationId + '</tt><br/>\n');
-            $("#results").append('<b>Started:</b> <span id="started"></span>; elapsed time: <span id="elapsed">00:00:00</span><br/>\n');
-            $("#results").append('<b>Tick</b> <span id="tick">0</span> of <span id="maxTicks"></span>; <span id="percentComplete"></span> % complete <br/>\n');
-            $("#results").append('<span id="match">0</span> characters matched so far<br/>\n');
-            $("#results").append('<div id="portion" style="font-style: italic; margin-top: 6pt"></div>\n');
+            $("#results").append('<span class=label>Simulation ID</span> <tt>' + simulationId + '</tt><br/><br/>\n');
+            $("#results").append('<span class=label>Started at</span> <span id="started"></span>; <span class=label>elapsed time</span> <span id="elapsed">00:00:00</span><br/><br/>\n');
+            $("#results").append('<span class=label>Tick</span> <span id="tick">0</span> of <span id="maxTicks"></span>; <span id="percentComplete"></span> % complete <br/><br/>\n');
+            $("#results").append('<span id="match">0</span> characters matched so far:<br/>\n');
+            $("#results").append('<div id="matchedPortion" class="matchedPortion"></div>\n');
             runSimulation();
         }
     }
@@ -35,7 +35,8 @@ $(function() {
     }
 
     function onError(jqXHR, textStatus, errorThrown) {
-        $("#results").append("onError: " + textStatus + " "  + errorThrown +"<br/>\n")
+        if (debug==true)
+            $("#results").append("onError: " + textStatus + " "  + errorThrown +"<br/>\n")
     }
 
     function onRunSuccess(data) {
