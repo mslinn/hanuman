@@ -33,6 +33,8 @@ trait HanumanService extends BlueEyesServiceBuilder
   private val simulationIds = new HashSet[String]
   private val staticContent = <html xmlns="http://www.w3.org/1999/xhtml">
                                 <head>
+                                  <title>Hanuman Simulation</title>
+                                  <link rel="stylesheet" href={contentUrl + "stylesheet.css"} type="text/css" />
                                   <script type="text/javascript" src={contentUrl + "jquery-1.7.min.js"}></script>
                                   <script type="text/javascript" src={contentUrl + "index.js"}></script>
                                 </head>
@@ -151,8 +153,6 @@ trait HanumanService extends BlueEyesServiceBuilder
                                            Configuration().maxTicks, Configuration().defaultDocument)
       val result = simulationStatusAsJson(simulationId)
       println("Result=" + Printer.compact(Printer.render(result)))
-      // prints: Result="result":-1
-      // ... this causes an Ajax parser error. Does the JSON need to be enclosed in {}?
       result
 
     case "status" =>
@@ -169,15 +169,31 @@ trait HanumanService extends BlueEyesServiceBuilder
   }
 
   /** @return status of simulation with given simulationID as JSON */
-  private def simulationStatusAsJson(simulationID:String):JValue = {
-    val resultOption = (hanumanRefOption.get ? GetSimulationStatus(simulationID)).await.get
+  private def simulationStatusAsJson(simulationId:String):JValue = {
+    val resultOption = (hanumanRefOption.get ? GetSimulationStatus(simulationId)).await.get
     resultOption match {
-      case Some(simulationStatus) =>
-        val textMatch = simulationStatus.asInstanceOf[SimulationStatus].bestTextMatch
-        JField("result", textMatch.length)
+      case Some(result) =>
+        val simulationStatus = result.asInstanceOf[SimulationStatus]
+        val textMatch = simulationStatus.bestTextMatch
+        val document = Configuration().defaultDocument
+        val portionMatched = if (textMatch.length>0)
+          document.substring(0, scala.math.min(document.length, textMatch.length)-1)
+        else
+          ""
+        JObject(
+          JField("result",
+            simulationStatus.decompose merge JObject(
+              JField("matchedPortion", portionMatched) ::
+              JField("version", versionMajor + "." + versionMinor) ::
+              Nil
+            )
+          ) :: Nil
+        )
 
       case None => // time out
         JString("result")
     }
   }
+
+
 }

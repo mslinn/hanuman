@@ -27,7 +27,7 @@ class Hanuman extends Actor {
 
     case NewSimulation(simulationId, workCellsPerVisor, maxTicks, document) =>
       EventHandler.debug(this, "Hanuman was requested create new simulation " + simulationId)
-      simulationStatuses += simulationId -> new SimulationStatus(simulationId)
+      simulationStatuses += simulationId -> new SimulationStatus(simulationId, maxTicks, workCellsPerVisor)
       val simVisorRef = Actor.actorOf(new SimulationSupervisor(simulationId, maxTicks, document, workCellsPerVisor))
       self.link(simVisorRef)
       simVisorRef.start()

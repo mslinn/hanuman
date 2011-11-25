@@ -32,7 +32,7 @@ class SimulationSupervisor(val simulationId:String,
 
   /** Keep track of busy WorkCells for each tick */
   private var workingCells = HashSet[ActorRef]().empty
-  private var bestTextMatch = new TextMatch(null, null, -1, 0, 0)
+  private var bestTextMatch = new TextMatch(null, null, 0, 0, 0)
 
 
   /** If any monkey finishes, we are done */
@@ -71,6 +71,7 @@ class SimulationSupervisor(val simulationId:String,
     EventHandler.debug(this, "All WorkCells have stopped for simulation " + simulationId)
     self.supervisor ! SimulationStopped(simulationId)
   }
+
   /** Cause each Monkey to generate a page of semi-random text */
   private def tick {
     for (workCellRef <- self.linkedActors.values()) {
