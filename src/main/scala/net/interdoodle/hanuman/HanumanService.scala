@@ -151,8 +151,8 @@ trait HanumanService extends BlueEyesServiceBuilder
                                            Configuration().maxTicks, Configuration().defaultDocument)
       val result = simulationStatusAsJson(simulationId)
       println("Result=" + Printer.compact(Printer.render(result)))
-      // prints: Result="result":{"workCellRef":"","length":-1,"startPos":0,"endPos":0}
-      // ... this causes an Ajax parser error. What's wrong with the JSON?
+      // prints: Result="result":-1
+      // ... this causes an Ajax parser error. Does the JSON need to be enclosed in {}?
       result
 
     case "status" =>
@@ -173,8 +173,8 @@ trait HanumanService extends BlueEyesServiceBuilder
     val resultOption = (hanumanRefOption.get ? GetSimulationStatus(simulationID)).await.get
     resultOption match {
       case Some(simulationStatus) =>
-        val result = simulationStatus.asInstanceOf[SimulationStatus].bestTextMatch.decompose
-        JField("result", result)
+        val textMatch = simulationStatus.asInstanceOf[SimulationStatus].bestTextMatch
+        JField("result", textMatch.length)
 
       case None => // time out
         JString("result")
