@@ -2,62 +2,48 @@ package net.interdoodle.hanuman.domain
 
 import akka.actor.Actor
 import akka.event.EventHandler
-import akka.stm.Ref
 import net.interdoodle.hanuman.message._
 import scala.collection.JavaConversions._
 import types._
 
 
-/** Monkey god (supervises simulations/Monkey supervisors)
+/** This actor supervisor never stops, however the SimulationSupervisors that it supervises are torn down at the end of
+ * each simulation
  * @author Mike Slinn */
-class Hanuman(val simulationID:String,
-              val workCellsPerVisor:Int,
-              val maxTicks:Int,
-              val document:String,
-              val simulationStatusRef:Ref[SimulationStatuses]) extends Actor {
-  val textMatchMapRef = new TextMatchMapRef()
-  var textMatchMap = new TextMatchMap()
-  textMatchMapRef.set(textMatchMap)
-  var simulationStatus = simulationStatusRef.get
-  simulationStatus.putSimulation(simulationID, textMatchMap)
+class Hanuman extends Actor {
+  private val simulationStatuses = new SimulationStatuses
 
-
-  override def preStart() {
-    createWorkVisor()
-  }
-
+  
   def receive = {
-    case GetSimulationStatus(simulationID) =>
-      EventHandler.debug(this, "Hanuman returning TextMatchMap for simulation " + simulationID)
-      self.channel ! simulationStatus.simulations.get(simulationID)
+    case DocumentMatch(simulationId, startIndex) =>
+      EventHandler.debug(this, "Hanuman: Simulation completed with a DocumentMatch (hooray!)")
+      val simulationStatus = simulationStatuses.get(simulationId)
+      simulationStatus.get.complete = true
+      self.channel ! simulationStatus // signal completion
 
-    case DocumentMatch(workUnitRef, startIndex) =>
-      EventHandler.debug(this, "Hanuman is done")
-      simulationStatusRef.set(simulationStatus) //FIXME return result
+    case GetSimulationStatus(simulationId) =>
+      EventHandler.debug(this, "Hanuman was requested to provide status for simulation " + simulationId)
+      self.channel ! simulationStatuses.get(simulationId)
 
-    case "stop" =>
-      EventHandler.debug(this, "Hanuman received a stop message")
-      for (workVisorRef <- self.linkedActors.values())
-        workVisorRef ! "stop"
+    case NewSimulation(simulationId, workCellsPerVisor, maxTicks, document) =>
+      EventHandler.debug(this, "Hanuman was requested create new simulation " + simulationId)
+      simulationStatuses += simulationId -> new SimulationStatus(simulationId)
+      val simVisorRef = Actor.actorOf(new SimulationSupervisor(simulationId, maxTicks, document, workCellsPerVisor))
+      self.link(simVisorRef)
+      simVisorRef.start()
 
-    case SimulationComplete(simulationID) =>
-      EventHandler.debug(this, "Hanuman received a 'stopped' message from a WorkVisor")
-      self.unlink(self.sender.get)
-      if (self.linkedActors.size()==0) { // WorkVisors are all stopped
-        //self.stop() // Keep Hanuman running
-        val ss = new SimulationStatuses(true, simulationStatusRef.get.simulations)
-        simulationStatusRef.set(ss)
-      }
-      EventHandler.notify(SimulationComplete(simulationID))
+    case SimulationStopped(simulationId) =>
+      EventHandler.debug(this, "Hanuman: SimulationSupervisor acknowledged a Stop message")
+      EventHandler.notify(SimulationStopped(simulationId)) // signal completion to non-actor
 
-    case _ =>
-      EventHandler.info(this, "Hanuman received an unknown message")
-  }
+    case Stop =>
+      EventHandler.debug(this, "Hanuman received a Stop message")
+      for (simVisorRef <- self.linkedActors.values())
+        simVisorRef ! Stop
 
-  private def createWorkVisor() {
-    val workVisorRef = Actor.actorOf(
-      new WorkVisor(simulationID, maxTicks, document, workCellsPerVisor, textMatchMapRef))
-    self.link(workVisorRef)
-    workVisorRef.start()
+    /** Only the newly top-ranked TextMatches for a simulation are sent to Hanuman */
+    case TextMatch(simulationId, workCellRef, matchLength, matchStart, matchEnd) =>
+      val simulationStatus = simulationStatuses.get(simulationId)
+      simulationStatus.get.bestTextMatch = TextMatch(simulationId, workCellRef, matchLength, matchStart, matchEnd)
   }
 }

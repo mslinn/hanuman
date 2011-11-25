@@ -23,10 +23,7 @@ SID=$(curl -sSf --header "Content-Type:application" "$DOMAIN/newSimulation")
 SIMULATION_ID=$(removeQuotes $SID)
 echo -e "\nHanuman simulation ID is $SIMULATION_ID"
 
-MSG=$(curl -sSf --header "Content-Type:application" "$DOMAIN/run/$SIMULATION_ID")
-echo -e "\n$(removeQuotes $MSG)"
-
-while true; do 
+while true; do
   MSG=$(curl -sSf --header "Content-Type:application" "$DOMAIN/status/$SIMULATION_ID")
   echo -e "\n$(removeQuotes $MSG)"
   sleep 3

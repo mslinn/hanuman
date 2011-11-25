@@ -25,16 +25,16 @@ class SimpleCriticSuite extends FunSuite {
   }
 
   test("assessText") {
-    sCritic.assessText(document, null, "ab")
+    sCritic.assessText(document, null, null, "ab")
     var actual = Printer.compact(Printer.render(sCritic.textMatch.decompose)).toString
-    assert(actual==="""{"monkeyRef":"Null workCellRef","length":2,"startPos":0,"endPos":2}""")
+    assert(actual==="""{"workCellRef":"Null workCellRef","length":2,"startPos":0,"endPos":2}""")
 
-    sCritic.assessText(document, null, "_abcd_")
+    sCritic.assessText(document, null, null, "_abcd_")
     actual = Printer.compact(Printer.render(sCritic.textMatch.decompose)).toString
-    assert(actual==="""{"monkeyRef":"Null workCellRef","length":4,"startPos":3,"endPos":5}""")
+    assert(actual==="""{"workCellRef":"Null workCellRef","length":4,"startPos":3,"endPos":5}""")
 
-    sCritic.assessText(document, null, "ab_ab__abcd_abcdefgh")
+    sCritic.assessText(document, null, null, "ab_ab__abcd_abcdefgh")
     actual = Printer.compact(Printer.render(sCritic.textMatch.decompose)).toString
-    assert(actual==="""{"monkeyRef":"Null workCellRef","length":8,"startPos":12,"endPos":20}""")
+    assert(actual==="""{"workCellRef":"Null workCellRef","length":8,"startPos":12,"endPos":20}""")
   }
 }
