@@ -9,7 +9,7 @@ import org.joda.time.format.{DateTimeFormat, PeriodFormatterBuilder}
 /** Status of one simulation.
  * Simulation starts counting time from the moment a SimulationStatus object is constructed.
  * @author Mike Slinn */
-case class SimulationStatus(id:String, maxTicks:Int, workCellsPerVisor:Int,
+case class SimulationStatus(simulationId:String, maxTicks:Int, workCellsPerVisor:Int,
     var complete:Boolean = false,
     var bestTextMatch:TextMatch = new TextMatch("", null, 0, 0, 0),
     var tick:Int = 0,
@@ -17,7 +17,7 @@ case class SimulationStatus(id:String, maxTicks:Int, workCellsPerVisor:Int,
 
   def decompose = JObject(
     JField("complete",             JBool(complete)) ::
-    JField("id",                   JString(id)) ::
+    JField("simulationId",         JString(simulationId)) ::
     JField("length",               JInt(bestTextMatch.length)) ::
     JField("formattedElapsedTime", JString(formattedElapsedTime)) ::
     JField("formattedTimeStarted", JString(formattedTimeStarted)) ::
@@ -29,10 +29,10 @@ case class SimulationStatus(id:String, maxTicks:Int, workCellsPerVisor:Int,
   )
 
   /** Use a copy of this case class for messaging */
-  def copy(id:String = this.id, maxTicks:Int = this.maxTicks, workCellsPerVisor:Int = this.workCellsPerVisor) = {
-    var ss = new SimulationStatus(id, maxTicks, workCellsPerVisor)
+  def copy(simulationId:String = this.simulationId, maxTicks:Int = this.maxTicks, workCellsPerVisor:Int = this.workCellsPerVisor) = {
+    var ss = new SimulationStatus(simulationId, maxTicks, workCellsPerVisor)
     ss.complete = this.complete
-    ss.bestTextMatch = this.bestTextMatch
+    ss.bestTextMatch = this.bestTextMatch.copy(simulationId)
     ss.tick = this.tick
     ss.timeStarted = this.timeStarted
     ss

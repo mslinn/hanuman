@@ -10,13 +10,13 @@ $(function() {
     function createSimulation() {
         $.ajax("/newSimulation", {
             contentType: "application/json",
-            success: onCreateSimulation
+            success: onNewSimulation
         });
     }
 
-    function onCreateSimulation(data) {
-        if (data.id) {
-            simulationId = data.id;
+    function onNewSimulation(data) {
+        if (data.simulationId) {
+            simulationId = data.simulationId;
             //$("#debug").html("")
             $("#newSimulationButton").hide();
             $("#stopSimulationButton").click(stopSimulation);
@@ -63,18 +63,20 @@ $(function() {
     }
 
     // data will be similar to:
-    // {"result":{"complete":false,"id":"a2f57249-d739-49c5-b54b-596623013de7","length":0,"formattedElapsedTime":"00:00:00","formattedTimeStarted":"02:10:40 PM","maxTicks":100,"percentComplete":0,"tick":0,"monkeys":10,"matchedPortion":"","version":"0.2"}}
+    // {"result":{"complete":false,"simulationId":"a2f57249-d739-49c5-b54b-596623013de7","length":0,
+    //   "formattedElapsedTime":"00:00:00","formattedTimeStarted":"02:10:40 PM","maxTicks":100,"percentComplete":0,
+    //   "tick":0,"monkeys":10,"matchedPortion":"","version":"0.2"}}
     function onGetSimulationStatus(data) {
         if (data.result) {
-            simulationId = data.result.id;
+            simulationId = data.result.simulationId;
             $("#debug").append("Tick " + data.result.tick +": " + data.result.matchedPortion + "<br/>\n")
                        .prop({ scrollTop: $("#debug").prop("scrollHeight") });
             $("#documentLength") .html(data.result.documentLength);
             $("#version")        .html(data.result.version);
-            $("#simulationID")   .html(data.result.id);
+            $("#simulationId")   .html(data.result.simulationId);
             $("#started")        .html(data.result.formattedTimeStarted);
             $("#elapsed")        .html(data.result.formattedElapsedTime);
-            $("#tick")           .html(data.result.tick);
+            $("#tick")           .html(Math.min(data.result.tick, data.result.maxTicks));
             $("#maxTicks")       .html(data.result.maxTicks);
             $("#match")          .html(data.result.matchedPortion.length);
             $("#percentComplete").html(data.result.percentComplete);
@@ -117,20 +119,30 @@ $(function() {
     $("body")
         .append('<h1 style="font-family: arial">Hanuman <span id="version"></span></h1>\n')
         .append('<p><a href="https://github.com/mslinn/hanuman" target="src">Source on GitHub</a><br/>' +
-                '<a href="http://www.slideshare.net/mslinn/hanuman-10278606" target="vid">Presentation on SlideShare</a></p>\n')
+                '<a href="http://www.slideshare.net/mslinn/hanuman-10278606" target="vid">' +
+                'Presentation on SlideShare</a></p>\n')
         .append('<button id="newSimulationButton">Start a new simulation</button>\n')
         .append('<div id="results" class="results"></div>\n')
         .append('<div id="debug" class="debug"></div>\n')
-        .append('<a href="http://micronauticsresearch.com" target="mr"><img src="http://micronauticsresearch.com/images/logo-300x91.png" style="position: absolute; bottom: 5; left: 5" /></a>\n')
+        .append('<a href="http://micronauticsresearch.com" target="mr">' +
+                '<img src="http://micronauticsresearch.com/images/logo-300x91.png" ' +
+                'style="position: absolute; bottom: 5; left: 5" /></a>\n')
         .append('<div class="debugCheckbox">Debug <input type="checkbox" id="debugCheckbox" />\n</div>\n')
-        .append('<a href="http://heroku.com" target="h"><img src="https://nav.heroku.com/images/logos/logo.png" style="position: absolute; bottom: 5; right: 5" /></a>\n');
+        .append('<a href="http://heroku.com" target="h">' +
+                '<img src="https://nav.heroku.com/images/logos/logo.png" ' +
+                'style="position: absolute; bottom: 5; right: 5" /></a>\n');
     $("#debug").hide()
-    $("#results").append('<span class=label>Simulation ID</span> <span id="simulationID" style="font-family: courier;mono">' + simulationId + '</span> &nbsp;&nbsp;')
+    $("#results").append('<span class=label>Simulation ID</span> <span id="simulationId" ' +
+                         'style="font-family: courier;mono">' + simulationId + '</span> &nbsp;&nbsp;')
                  .append('<button id="stopSimulationButton">Stop simulation</button>\n')
                  .append('<br/><br/>\n')
-                 .append('<span class=label>Started at</span> <span id="started"></span>; <span class=label>elapsed time</span> <span id="elapsed">00:00:00</span><br/><br/>\n')
-                 .append('<span class=label>Tick</span> <span id="tick">0</span> of <span id="maxTicks"></span>; <span id="percentComplete"></span> % complete <br/><br/>\n')
-                 .append('<span id="match">0</span> characters of <span id="documentLength">0</span> matched so far:<br/>\n')
+                 .append('<span class=label>Started at</span> <span id="started"></span>; ' +
+                         '<span class=label>elapsed time</span> <span id="elapsed">00:00:00</span>, ' +
+                         'simulating <span id="monkeys">0</span> monkeys typing semi-randomly.<br/><br/>\n')
+                 .append('<span class=label>Tick</span> <span id="tick">0</span> of <span id="maxTicks"></span>; ' +
+                         '<span id="percentComplete"></span> % complete <br/><br/>\n')
+                 .append('<span id="match">0</span> characters of <span id="documentLength">0</span> ' +
+                         'matched so far:<br/>\n')
                  .append('<div id="matchedPortion" class="matchedPortion"></div>\n').hide();
     $("#newSimulationButton").click(createSimulation);
     $("#debugCheckbox").click(toggleDebug);

@@ -115,7 +115,7 @@ trait HanumanService extends BlueEyesServiceBuilder
     if (operation=="newSimulation") {
       val simulationId = UUID.randomUUID().toString
       simulationIds += simulationId
-      Future.sync(HttpResponse(content = Some(JObject(List(JField("id", simulationId))))))
+      Future.sync(HttpResponse(content = Some(JObject(List(JField("simulationId", simulationId))))))
     } else {
       val msg = "The only operation that can be without a simulationID is newSimulation. You specified '" + operation + "'"
       Future.sync(HttpResponse(status=HttpStatus(400, msg), content = Some(msg)))
