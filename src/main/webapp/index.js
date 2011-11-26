@@ -89,6 +89,8 @@ $(function() {
 
     $("body")
         .append('<h1 style="font-family: arial">Hanuman <span id="version"></span></h1>\n')
+        .append('<p><a href="https://github.com/mslinn/hanuman" target="src">Source on GitHub</a><br/>' +
+                '<a href="http://www.slideshare.net/mslinn/hanuman-10278606" target="vid">Presentation on SlideShare</a></p>\n')
         .append('<button id="newSimulationButton">Start a new simulation</button>\n')
         .append('<div id="results"></div>\n')
         .append('<div id="debug"></div>\n')
