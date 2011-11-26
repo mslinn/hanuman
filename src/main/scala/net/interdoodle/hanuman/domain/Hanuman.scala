@@ -13,13 +13,13 @@ import types._
 class Hanuman extends Actor {
   private val simulationStatuses = new SimulationStatuses
 
-  
+
   def receive = {
     case DocumentMatch(simulationId, startIndex) =>
       EventHandler.debug(this, "Hanuman: Simulation completed with a DocumentMatch (hooray!)")
       val simulationStatus = simulationStatuses.get(simulationId)
-      simulationStatus.get.complete = true
       self.channel ! simulationStatus // signal completion
+      // TODO stop simulationSupervisor
 
     case GetSimulationStatus(simulationId) =>
       EventHandler.debug(this, "Hanuman was requested to provide status for simulation " + simulationId)
@@ -41,9 +41,9 @@ class Hanuman extends Actor {
       for (simVisorRef <- self.linkedActors.values())
         simVisorRef ! Stop
 
-    /** Only the newly top-ranked TextMatches for a simulation are sent to Hanuman */
-    case TextMatch(simulationId, workCellRef, matchLength, matchStart, matchEnd) =>
-      val simulationStatus = simulationStatuses.get(simulationId)
-      simulationStatus.get.bestTextMatch = TextMatch(simulationId, workCellRef, matchLength, matchStart, matchEnd)
+    /** sent every tick by every simulationSupervisor */
+    case SimulationStatus(simulationId, maxTicks, workCellsPerVisor, complete, bestTextMatch, tick, timeStarted) =>
+      simulationStatuses += simulationId ->
+        SimulationStatus(simulationId, maxTicks, workCellsPerVisor, complete, bestTextMatch, tick, timeStarted)
   }
 }

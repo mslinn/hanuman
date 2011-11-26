@@ -1,20 +1,19 @@
-package net.interdoodle.hanuman.domain
+package net.interdoodle.hanuman.message
 
-import net.interdoodle.hanuman.message.TextMatch
 import blueeyes.json.JsonAST.{JBool, JInt, JField, JObject, JString}
-import org.joda.time.format.{DateTimeFormat, PeriodFormatterBuilder}
+
 import org.joda.time.{DateTime, Period}
+import org.joda.time.format.{DateTimeFormat, PeriodFormatterBuilder}
 
 
 /** Status of one simulation.
  * Simulation starts counting time from the moment a SimulationStatus object is constructed.
  * @author Mike Slinn */
-class SimulationStatus (val id:String, val maxTicks:Int, val workCellsPerVisor:Int) {
-  var complete = false
-  var bestTextMatch = new TextMatch("", null, 0, 0, 0)
-  val timeStarted = new DateTime
-  var tick = 0
-
+case class SimulationStatus(id:String, maxTicks:Int, workCellsPerVisor:Int,
+    var complete:Boolean = false,
+    var bestTextMatch:TextMatch = new TextMatch("", null, 0, 0, 0),
+    var tick:Int = 0,
+    var timeStarted:DateTime = new DateTime) {
 
   def decompose = JObject(
     JField("complete",             JBool(complete)) ::
@@ -28,6 +27,16 @@ class SimulationStatus (val id:String, val maxTicks:Int, val workCellsPerVisor:I
     JField("monkeys",              JInt(workCellsPerVisor)) ::
     Nil
   )
+
+  /** Use a copy of this case class for messaging */
+  def copy(id:String = this.id, maxTicks:Int = this.maxTicks, workCellsPerVisor:Int = this.workCellsPerVisor) = {
+    var ss = new SimulationStatus(id, maxTicks, workCellsPerVisor)
+    ss.complete = this.complete
+    ss.bestTextMatch = this.bestTextMatch
+    ss.tick = this.tick
+    ss.timeStarted = this.timeStarted
+    ss
+  }
 
   def formattedElapsedTime = SimulationStatus.periodFormatter.print(new Period(timeStarted, new DateTime()))
 

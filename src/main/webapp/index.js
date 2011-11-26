@@ -1,8 +1,11 @@
 $(function() {
-    var simulationId;
     var debug = false;
-    var running = false;
+    var intervalTimer;
+    var pollInterval = 1500; // milliseconds
     var previousMatchedPortion = "";
+    var running = false;
+    var simulationId;
+
 
     function createSimulation() {
         $.ajax("/newSimulation", {
@@ -46,7 +49,7 @@ $(function() {
         if (data.result) {
             //$("#results").append("<li>" + data.result + "</li>");
             onGetSimulationStatus(data)
-            window.setInterval(getSimulationStatus, 1500);
+            intervalTimer = window.setInterval(getSimulationStatus, pollInterval);
         }
     }
 
@@ -66,22 +69,29 @@ $(function() {
             simulationId = data.result.id;
             $("#debug").append("Tick " + data.result.tick +": " + data.result.matchedPortion + "<br/>\n")
                        .prop({ scrollTop: $("#debug").prop("scrollHeight") });
+            $("#documentLength") .html(data.result.documentLength);
             $("#version")        .html(data.result.version);
             $("#simulationID")   .html(data.result.id);
             $("#started")        .html(data.result.formattedTimeStarted);
             $("#elapsed")        .html(data.result.formattedElapsedTime);
             $("#tick")           .html(data.result.tick);
             $("#maxTicks")       .html(data.result.maxTicks);
+            $("#match")          .html(data.result.matchedPortion.length);
             $("#percentComplete").html(data.result.percentComplete);
             $("#monkeys")        .html(data.result.monkeys);
-            var newMatchedPortion = data.result.matchedPortion.substring(previousMatchedPortion.length-1, data.result.matchedPortion.length-1)
+            var newMatchedPortion = data.result.matchedPortion.substring(previousMatchedPortion.length-1, data.result.matchedPortion.length-1);
             $("#matchedPortion") .html(previousMatchedPortion + '<span class="newMatchedPortion">' + newMatchedPortion + '</span>');
+            $("#debug").append("data.result.matchedPortion=" + data.result.matchedPortion + "<br/>\n");
+            $("#debug").append("previousMatchedPortion=" + previousMatchedPortion + "<br/>\n");
+            $("#debug").append("newMatchedPortion=" + newMatchedPortion + "<br/>\n");
+            $("#debug").append("complete=" + data.result.complete + "<br/>\n");
             previousMatchedPortion = data.result.matchedPortion;
-            if (data.result.complete) {
+            if (data.result.tick>=data.result.maxTicks || data.result.complete==true) {
+                window.clearInterval(intervalTimer);
+                $("#debug").append("Polling should stop<br/>\n");
                 $("#stopSimulationButton").hide("slow");
                 $("#newSimulationButton").show("slow");
-                // do other things to show user simulation is done
-                // stop querying server
+                running = false;
             }
         }
     }
@@ -89,8 +99,6 @@ $(function() {
     function stopSimulation() {
         running = false;
         $("#debug").html();
-        $("#debug").hide();
-        $("#results").hide();
         $("#stopSimulationButton").hide();
         $("#newSimulationButton").show();
         $.ajax("/stop", {
@@ -122,7 +130,7 @@ $(function() {
                  .append('<br/><br/>\n')
                  .append('<span class=label>Started at</span> <span id="started"></span>; <span class=label>elapsed time</span> <span id="elapsed">00:00:00</span><br/><br/>\n')
                  .append('<span class=label>Tick</span> <span id="tick">0</span> of <span id="maxTicks"></span>; <span id="percentComplete"></span> % complete <br/><br/>\n')
-                 .append('<span id="match">0</span> characters matched so far:<br/>\n')
+                 .append('<span id="match">0</span> characters of <span id="documentLength">0</span> matched so far:<br/>\n')
                  .append('<div id="matchedPortion" class="matchedPortion"></div>\n').hide();
     $("#newSimulationButton").click(createSimulation);
     $("#debugCheckbox").click(toggleDebug);

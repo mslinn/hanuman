@@ -2,6 +2,9 @@ package net.interdoodle.hanuman
 
 import akka.actor.{ActorRef, Actor}
 import akka.event.EventHandler
+import collection.mutable.HashSet
+import java.util.UUID
+import net.lag.logging.Logger
 
 import blueeyes.BlueEyesServiceBuilder
 import blueeyes.concurrent.Future
@@ -11,15 +14,12 @@ import blueeyes.core.http.MimeTypes._
 import blueeyes.core.http.combinators.HttpRequestCombinators
 import blueeyes.core.service.{HttpService, HttpServiceContext}
 import blueeyes.json.JsonAST._
+import blueeyes.json.Printer
 
 import domain.types._
-import domain.{SimulationStatus, Hanuman}
-import java.util.UUID
-import message.{NewSimulation, SimulationStopped, GetSimulationStatus}
+import domain.Hanuman
+import message.{GetSimulationStatus, NewSimulation, SimulationStopped, SimulationStatus}
 import net.interdoodle.hanuman.message.Stop
-import net.lag.logging.Logger
-import collection.mutable.HashSet
-import blueeyes.json.Printer
 
 
 /** BlueEyes service handler for Hanuman requests.
@@ -176,7 +176,7 @@ trait HanumanService extends BlueEyesServiceBuilder
         val simulationStatus = result.asInstanceOf[SimulationStatus]
         val textMatch = simulationStatus.bestTextMatch
         val document = Configuration().defaultDocument
-        println(document.length, textMatch.length)
+        println(simulationStatus.tick, document.length, textMatch.length)
         val portionMatched = if (textMatch.length>0)
           document.substring(0, scala.math.min(document.length, textMatch.length)-1)
         else
@@ -184,6 +184,7 @@ trait HanumanService extends BlueEyesServiceBuilder
         JObject(
           JField("result",
             simulationStatus.decompose merge JObject(
+              JField("documentLength", document.length()) ::
               JField("matchedPortion", portionMatched) ::
               JField("version", versionMajor + "." + versionMinor) ::
               Nil
