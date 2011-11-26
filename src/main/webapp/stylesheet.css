@@ -10,6 +10,28 @@ body, h1, h2, h3, h4, li, p {
     font-family: Verdana, Arial, Helvetica, sans-serif;
 }
 
+.debug {
+    background-color: #dcdcdc;
+    border-color: #808080;
+    border-style: inset;
+    border-width: thin;
+    margin-top: 12pt;
+    min-height: 2in;
+    max-height: 2in;
+    overflow: auto;
+}
+
+.debugCheckbox {
+    position: absolute;
+    top: 5;
+    right: 5;
+    color: #999;
+}
+
+.debugCheckbox:hover {
+    color: #333;
+}
+
 .label {
     font-weight: 500;
     color: gray;
@@ -18,4 +40,10 @@ body, h1, h2, h3, h4, li, p {
 .matchedPortion {
     font-style: italic;
     margin-top: 6pt;
+    overflow: auto;
+    max-height: 2.5in;
+}
+
+.results {
+    max-height: 2.5in;
 }
