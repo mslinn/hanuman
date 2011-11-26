@@ -2,6 +2,7 @@ $(function() {
     var simulationId;
     var debug = false;
     var running = false;
+    var previousMatchedPortion = "";
 
     function createSimulation() {
         $.ajax("/newSimulation", {
@@ -68,7 +69,9 @@ $(function() {
             $("#maxTicks")       .html(data.result.maxTicks);
             $("#percentComplete").html(data.result.percentComplete);
             $("#monkeys")        .html(data.result.monkeys);
-            $("#matchedPortion") .html(data.result.matchedPortion);
+            var newMatchedPortion = data.result.matchedPortion.substring(previousMatchedPortion.length-1, data.result.matchedPortion.length-1)
+            $("#matchedPortion") .html(previousMatchedPortion + '<span class="newMatchedPortion">' + newMatchedPortion + '</span>');
+            previousMatchedPortion = data.result.matchedPortion;
             if (data.result.complete) {
                 $("#stopSimulationButton").hide("slow");
                 $("#newSimulationButton").show("slow");
