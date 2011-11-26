@@ -63,9 +63,11 @@ $(function() {
     // {"result":{"complete":false,"id":"a2f57249-d739-49c5-b54b-596623013de7","length":0,"formattedElapsedTime":"00:00:00","formattedTimeStarted":"02:10:40 PM","maxTicks":100,"percentComplete":0,"tick":0,"monkeys":10,"matchedPortion":"","version":"0.2"}}
     function onGetSimulationStatus(data) {
         if (data.result) {
+            simulationId = data.result.id;
             $("#debug").append("Tick " + data.result.tick +": " + data.result.matchedPortion + "<br/>\n")
                        .prop({ scrollTop: $("#debug").prop("scrollHeight") });
             $("#version")        .html(data.result.version);
+            $("#simulationID")   .html(data.result.id);
             $("#started")        .html(data.result.formattedTimeStarted);
             $("#elapsed")        .html(data.result.formattedElapsedTime);
             $("#tick")           .html(data.result.tick);
@@ -115,7 +117,7 @@ $(function() {
         .append('<div class="debugCheckbox">Debug <input type="checkbox" id="debugCheckbox" />\n</div>\n')
         .append('<a href="http://heroku.com" target="h"><img src="https://nav.heroku.com/images/logos/logo.png" style="position: absolute; bottom: 5; right: 5" /></a>\n');
     $("#debug").hide()
-    $("#results").append('<span class=label>Simulation ID</span> <tt>' + simulationId + '</tt> &nbsp;&nbsp;')
+    $("#results").append('<span class=label>Simulation ID</span> <span id="simulationID" style="font-family: courier;mono">' + simulationId + '</span> &nbsp;&nbsp;')
                  .append('<button id="stopSimulationButton">Stop simulation</button>\n')
                  .append('<br/><br/>\n')
                  .append('<span class=label>Started at</span> <span id="started"></span>; <span class=label>elapsed time</span> <span id="elapsed">00:00:00</span><br/><br/>\n')
