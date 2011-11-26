@@ -140,7 +140,7 @@ $(function() {
                          '<span class=label>elapsed time</span> <span id="elapsed">00:00:00</span>; ' +
                          'simulating <span id="monkeys">0</span> monkeys typing semi-randomly.<br/><br/>\n')
                  .append('<span class=label>Tick</span> <span id="tick">0</span> of <span id="maxTicks"></span>; ' +
-                         '<span id="percentComplete"></span> % complete <br/><br/>\n')
+                         '<span id="percentComplete"></span>% complete <br/><br/>\n')
                  .append('<span id="match">0</span> characters of <span id="documentLength">0</span> ' +
                          'matched so far:<br/>\n')
                  .append('<div id="matchedPortion" class="matchedPortion"></div>\n').hide();
