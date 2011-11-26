@@ -81,7 +81,7 @@ $(function() {
             $("#match")          .html(data.result.matchedPortion.length);
             $("#percentComplete").html(data.result.percentComplete);
             $("#monkeys")        .html(data.result.monkeys);
-            var newMatchedPortion = data.result.matchedPortion.substring(previousMatchedPortion.length-1, data.result.matchedPortion.length-1);
+            var newMatchedPortion = data.result.matchedPortion.substring(previousMatchedPortion.length);
             $("#matchedPortion") .html(previousMatchedPortion + '<span class="newMatchedPortion">' + newMatchedPortion + '</span>');
             $("#debug").append("data.result.matchedPortion=" + data.result.matchedPortion + "<br/>\n");
             $("#debug").append("previousMatchedPortion=" + previousMatchedPortion + "<br/>\n");
@@ -137,7 +137,7 @@ $(function() {
                  .append('<button id="stopSimulationButton">Stop simulation</button>\n')
                  .append('<br/><br/>\n')
                  .append('<span class=label>Started at</span> <span id="started"></span>; ' +
-                         '<span class=label>elapsed time</span> <span id="elapsed">00:00:00</span>, ' +
+                         '<span class=label>elapsed time</span> <span id="elapsed">00:00:00</span>; ' +
                          'simulating <span id="monkeys">0</span> monkeys typing semi-randomly.<br/><br/>\n')
                  .append('<span class=label>Tick</span> <span id="tick">0</span> of <span id="maxTicks"></span>; ' +
                          '<span id="percentComplete"></span> % complete <br/><br/>\n')
