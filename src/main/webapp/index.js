@@ -14,8 +14,8 @@ $(function() {
     function onCreateSimulation(data) {
         if (data.id) {
             simulationId = data.id;
+            //$("#debug").html("")
             $("#newSimulationButton").hide();
-            //$("#results").html()
             $("#stopSimulationButton").click(stopSimulation);
             $("#stopSimulationButton").show();
             $("#results").show();
@@ -63,6 +63,8 @@ $(function() {
     // {"result":{"complete":false,"id":"a2f57249-d739-49c5-b54b-596623013de7","length":0,"formattedElapsedTime":"00:00:00","formattedTimeStarted":"02:10:40 PM","maxTicks":100,"percentComplete":0,"tick":0,"monkeys":10,"matchedPortion":"","version":"0.2"}}
     function onGetSimulationStatus(data) {
         if (data.result) {
+            $("#debug").append("Tick " + data.result.tick +": " + data.result.matchedPortion + "<br/>\n")
+                       .prop({ scrollTop: $("#debug").prop("scrollHeight") });
             $("#version")        .html(data.result.version);
             $("#started")        .html(data.result.formattedTimeStarted);
             $("#elapsed")        .html(data.result.formattedElapsedTime);
