@@ -25,6 +25,7 @@ $(function() {
 
     function runSimulation() {
         running = true;
+        previousMatchedPortion = "";
         if (debug==true)
             $("#debug").show()
         $("#debug").append("runSimulation(): About to invoke run<br/>\n");
