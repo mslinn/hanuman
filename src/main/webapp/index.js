@@ -1,5 +1,5 @@
 $(function() {
-    var debug = false;
+    var debug = true;
     var intervalTimer;
     var pollInterval = 1500; // milliseconds
     var previousMatchedPortion = "";
@@ -14,44 +14,6 @@ $(function() {
         });
     }
 
-    function onNewSimulation(data) {
-        if (data.simulationId) {
-            simulationId = data.simulationId;
-            //$("#debug").html("")
-            $("#newSimulationButton").hide();
-            $("#stopSimulationButton").click(stopSimulation);
-            $("#stopSimulationButton").show();
-            $("#results").show();
-            runSimulation();
-        }
-    }
-
-    function runSimulation() {
-        running = true;
-        previousMatchedPortion = "";
-        if (debug==true)
-            $("#debug").show()
-        $("#debug").append("runSimulation(): About to invoke run<br/>\n");
-        $.ajax("/run/" + simulationId, {
-            contentType: "application/json",
-            success: onRunSuccess,
-            error: onError
-        });
-    }
-
-    function onError(jqXHR, textStatus, errorThrown) {
-        $("#debug").append("onError: " + textStatus + " "  + errorThrown +"<br/>\n")
-    }
-
-    function onRunSuccess(data) {
-        if (debug==true)
-            $("#debug").append("onRunSuccess(): About to check for data.result<br/>\n");
-        if (data.result) {
-            onGetSimulationStatus(data)
-            intervalTimer = window.setInterval(getSimulationStatus, pollInterval);
-        }
-    }
-
     function getSimulationStatus() {
         $("#debug").append("getSimulationStatus(): About to invoke status<br/>\n");
         $.ajax("/status/" + simulationId, {
@@ -59,6 +21,10 @@ $(function() {
             success: onGetSimulationStatus,
             error: onError
         });
+    }
+
+    function onError(jqXHR, textStatus, errorThrown) {
+        $("#debug").append("onError: " + textStatus + " "  + errorThrown +"<br/>\n")
     }
 
     // data will be similar to:
@@ -93,7 +59,9 @@ $(function() {
 
             previousMatchedPortion = data.result.matchedPortion;
             if (data.result.tick>=data.result.maxTicks || data.result.complete==true) {
-                window.clearInterval(intervalTimer);
+                if (intervalTimer)
+                    window.clearInterval(intervalTimer);
+                intervalTimer = undefined;
                 $("#debug").append("Polling should stop<br/>\n");
                 $("#stopSimulationButton").hide("slow");
                 $("#newSimulationButton").show("slow");
@@ -102,13 +70,61 @@ $(function() {
         }
     }
 
+    function onNewSimulation(data) {
+        if (data.simulationId) {
+            simulationId = data.simulationId;
+            //$("#debug").html("")
+            $("#newSimulationButton").hide();
+            $("#stopSimulationButton").click(stopSimulation);
+            $("#stopSimulationButton").show();
+            $("#results").show();
+            runSimulation();
+        }
+    }
+
+    function onRunSuccess(data) {
+        if (debug==true)
+            $("#debug").append("onRunSuccess(): About to check for data.result<br/>\n");
+        if (data.result) {
+            onGetSimulationStatus(data)
+            intervalTimer = window.setInterval(getSimulationStatus, pollInterval);
+        }
+    }
+
+    function onStopSuccess(data) {
+        if (debug==true)
+            $("#debug").append("onRunSuccess(): About to check for data.result<br/>\n");
+        if (data.result) {
+            onGetSimulationStatus(data)
+        }
+        if (intervalTimer)
+            window.clearInterval(intervalTimer);
+        intervalTimer = undefined;
+    }
+
+    function runSimulation() {
+        running = true;
+        previousMatchedPortion = "";
+        if (debug==true)
+            $("#debug").show()
+        $("#debug").append("runSimulation(): About to invoke run<br/>\n");
+        $.ajax("/run/" + simulationId, {
+            contentType: "application/json",
+            success: onRunSuccess,
+            error: onError
+        });
+    }
+
     function stopSimulation() {
+        $("#debug").append("Asking Hanuman to stop simulation " + simulationId + "<br/>\n");
         running = false;
         $("#debug").html();
         $("#stopSimulationButton").hide();
         $("#newSimulationButton").show();
-        $.ajax("/stop", {
-            contentType: "application/json"
+        $.ajax("/stop/" + simulationId, {
+            contentType: "application/json",
+            success: onStopSuccess,
+            error: onError
         });
     }
 

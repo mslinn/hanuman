@@ -4,6 +4,7 @@ import akka.actor.{ActorRef, Actor}
 import akka.event.EventHandler
 import collection.mutable.HashSet
 import java.util.UUID
+import message._
 import net.lag.logging.Logger
 
 import blueeyes.BlueEyesServiceBuilder
@@ -18,8 +19,6 @@ import blueeyes.json.Printer
 
 import domain.types._
 import domain.Hanuman
-import message.{GetSimulationStatus, NewSimulation, SimulationStopped, SimulationStatus}
-import net.interdoodle.hanuman.message.Stop
 
 
 /** BlueEyes service handler for Hanuman requests.
@@ -162,7 +161,7 @@ trait HanumanService extends BlueEyesServiceBuilder
 
     case "stop" =>
       val hanumanRef = hanumanRefOption.get
-      val future = hanumanRef ? Stop
+      val future = hanumanRef ? StopSimulation(simulationId)
       future.await // block until hanuman shuts down
       simulationStatusAsJson(simulationId)
 
