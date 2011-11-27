@@ -3,4 +3,4 @@ package net.interdoodle.hanuman.message
 /**
  * @author Mike Slinn */
 
-case class SimulationComplete(sessionID:String)
+case class SimulationStopped(sessionID:String)

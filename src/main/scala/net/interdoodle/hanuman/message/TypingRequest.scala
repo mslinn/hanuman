@@ -5,4 +5,4 @@ import akka.actor.ActorRef
 
 /**
  * @author Mike Slinn */
-case class TypingRequest (monkeyRef:ActorRef)
+case class TypingRequest(simulationId:String, workCellRef:ActorRef)

@@ -6,18 +6,19 @@ import akka.event.EventHandler
 import net.interdoodle.hanuman.message._
 import scala.collection.mutable.HashSet
 import scala.collection.JavaConversions._
-import types.TextMatchMapRef
+import types._
 
 
 /** WorkCell supervisor manages simulation. It sends a TypingRequest to each WorkCell every tick.
  * Creates 'workCellsPerVisor' Akka Actor references (to type WorkCell) with identical probability distributions.
  * Dispatches requests to generate semi-random text.
  * @author Mike Slinn */
-class WorkVisor(val simulationID:String,
+class SimulationSupervisor(val simulationId:String,
                   val maxTicks:Int,
                   val document:String,
-                  val workCellsPerVisor:Int,
-                  val textMatchMapRef:TextMatchMapRef) extends Actor {
+                  val workCellsPerVisor:Int) extends Actor {
+  /** Keep simulationStatus up to date so Hanuman does not have to worry about maintaining it */
+  var simulationStatus = new SimulationStatus(simulationId, maxTicks, workCellsPerVisor)
   private val documentLength = document.length()
 
   private val letterProbability = new LetterProbabilities()
@@ -27,9 +28,7 @@ class WorkVisor(val simulationID:String,
   self.lifeCycle = Permanent
   self.faultHandler = OneForOneStrategy(List(classOf[Throwable]), 5, 5000)
 
-  /** WorkVisors keep simulationStatus up to date so supervisor does not have to worry about maintaining it */
   private var running = false
-  private var tickNumber = 1
 
   /** Keep track of busy WorkCells for each tick */
   private var workingCells = HashSet[ActorRef]().empty
@@ -43,7 +42,8 @@ class WorkVisor(val simulationID:String,
 
   override def preStart() {
     running = true
-    tickNumber = 1
+    simulationStatus.bestTextMatch = new TextMatch(null, null, 0, 0, 0)
+    simulationStatus.tick = 1
     for (i <- 1 to workCellsPerVisor) {
       val workCellRef = Actor.actorOf(new WorkCell[SimpleCritic](document, letterProbability)(() => new SimpleCritic))
       self.link(workCellRef)
@@ -53,10 +53,10 @@ class WorkVisor(val simulationID:String,
   }
 
   private def checkTick {
-    if (running && tickNumber<=maxTicks) {
-      EventHandler.debug(this, "Simulation tick #" + tickNumber.toString())
+    if (running && simulationStatus.tick<=maxTicks) {
+      EventHandler.debug(this, "Simulation tick #" + simulationStatus.tick.toString())
       tick // until this WorkVisor instance is stopped
-      tickNumber += 1
+      simulationStatus.tick += 1
     } else {
       stopWorkCells
     }
@@ -68,46 +68,48 @@ class WorkVisor(val simulationID:String,
       workingCells -= workCellActorRef
       self.unlink(workCellActorRef)
     }
-    EventHandler.debug(this, "All WorkCells have stopped")
-    self.supervisor ! SimulationComplete(simulationID)
+    EventHandler.debug(this, "All WorkCells have stopped for simulation " + simulationId)
+    self.supervisor ! SimulationStopped(simulationId)
   }
+
   /** Cause each Monkey to generate a page of semi-random text */
   private def tick {
     for (workCellRef <- self.linkedActors.values()) {
       workingCells += workCellRef
-      EventHandler.debug(this, "tick " + tickNumber + "; " + workingCells.size + "; " + "workingCells")
-      workCellRef ! TypingRequest(workCellRef)
+      EventHandler.debug(this, "tick " + simulationStatus.tick + "; " + workingCells.size + "; " + "workingCells")
+      workCellRef ! TypingRequest(simulationId, workCellRef)
     }
   }
 
   def receive = {
-    case "stop" =>
-      EventHandler.debug(this, "WorkVisor received 'stop' message")
+    case Stop =>
+      EventHandler.debug(this, "SimulationSupervisor received Stop message")
       running = false
       stopWorkCells
 
     case NoMatch(workCellRef) =>
       workingCells -= workCellRef
-      EventHandler.debug(this, "tick " + tickNumber + "; " + workingCells.size + "; " + "workingCells (no match)")
+      self.supervisor ! simulationStatus.copy()
+      EventHandler.debug(this, "tick " + simulationStatus.tick + "; " + workingCells.size + "; " + "workingCells (no match)")
       if (workingCells.size==0)
         checkTick
 
-    case TextMatch(workCellRef, matchLength, matchStart, matchEnd) =>
-      EventHandler.debug(this, workCellRef.uuid + " matched " + matchLength + " characters from " + matchStart + " to " + matchEnd)
-      val textMatchMap = textMatchMapRef.get
-      textMatchMap += workCellRef.uuid -> TextMatch(workCellRef, matchLength, matchStart, matchEnd)
-      textMatchMapRef.set(textMatchMap)
+    case TextMatch(simulationId, workCellRef, matchLength, matchStart, matchEnd) =>
+      EventHandler.debug(this, "Simulation " + simulationId + " matched " + matchLength + " characters from " + matchStart + " to " + matchEnd)
+      if (matchLength>simulationStatus.bestTextMatch.length) {
+        simulationStatus.bestTextMatch = TextMatch(simulationId, workCellRef, matchLength, matchStart, matchEnd)
+      }
+      self.supervisor ! simulationStatus.copy()
       if (matchLength==documentLength) { // success! This has a very low probability of happening
+        simulationStatus.complete = true
+        workingCells.clear()
         running = false
-        self.supervisor ! DocumentMatch(workCellRef, matchStart)
+        self.supervisor ! DocumentMatch(simulationId, matchStart)
       } else {
         workingCells -= workCellRef
-        EventHandler.debug(this, "tick " + tickNumber + "; " + workingCells.size + "; " + "workingCells (match)")
+        EventHandler.debug(this, "tick " + simulationStatus.tick + "; " + workingCells.size + "; " + "workingCells (match)")
         if (workingCells.size==0)
           checkTick
       }
-
-    case _ =>
-      EventHandler.debug(this, "WorkVisor received an unknown message")
   }
 }

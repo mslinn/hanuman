@@ -1,63 +1,61 @@
 package net.interdoodle.hanuman.domain
 
-import akka.actor.Actor
 import akka.event.EventHandler
-import akka.stm.Ref
 import net.interdoodle.hanuman.message._
 import scala.collection.JavaConversions._
 import types._
+import collection.mutable.HashMap
+import akka.actor.{ActorRef, Actor}
 
 
-/** Monkey god (supervises simulations/Monkey supervisors)
+/** This actor supervisor never stops, however the SimulationSupervisors that it supervises are torn down at the end of
+ * each simulation
  * @author Mike Slinn */
-class Hanuman(val simulationID:String,
-              val workCellsPerVisor:Int,
-              val maxTicks:Int,
-              val document:String,
-              val simulationStatusRef:Ref[SimulationStatuses]) extends Actor {
-  val textMatchMapRef = new TextMatchMapRef()
-  var textMatchMap = new TextMatchMap()
-  textMatchMapRef.set(textMatchMap)
-  var simulationStatus = simulationStatusRef.get
-  simulationStatus.putSimulation(simulationID, textMatchMap)
+class Hanuman extends Actor {
+  private val simulationStatuses = new SimulationStatuses
 
+  /** Keep track of running simulations */
+  private val simulationSupervisors = new HashMap[String, ActorRef].empty
 
-  override def preStart() {
-    createWorkVisor()
-  }
 
   def receive = {
-    case GetSimulationStatus(simulationID) =>
-      EventHandler.debug(this, "Hanuman returning TextMatchMap for simulation " + simulationID)
-      self.channel ! simulationStatus.simulations.get(simulationID)
-
-    case DocumentMatch(workUnitRef, startIndex) =>
-      EventHandler.debug(this, "Hanuman is done")
-      simulationStatusRef.set(simulationStatus) //FIXME return result
-
-    case "stop" =>
-      EventHandler.debug(this, "Hanuman received a stop message")
-      for (workVisorRef <- self.linkedActors.values())
-        workVisorRef ! "stop"
-
-    case SimulationComplete(simulationID) =>
-      EventHandler.debug(this, "Hanuman received a 'stopped' message from a WorkVisor")
-      self.unlink(self.sender.get)
-      if (self.linkedActors.size()==0) { // WorkVisors are all stopped
-        //self.stop() // Keep Hanuman running
-        val ss = new SimulationStatuses(true, simulationStatusRef.get.simulations)
-        simulationStatusRef.set(ss)
+    case DocumentMatch(simulationId, startIndex) =>
+      EventHandler.debug(this, "Hanuman: Simulation completed with a DocumentMatch (hooray!)")
+      val simulationStatus = simulationStatuses.get(simulationId)
+      self.channel ! simulationStatus // signal completion
+      simulationSupervisors.get(simulationId) match {
+        case Some(simulationSupervisorRef) => simulationSupervisorRef ! Stop
+        case None =>
       }
-      EventHandler.notify(SimulationComplete(simulationID))
+      simulationSupervisors -= simulationId
 
-    case _ =>
-      EventHandler.info(this, "Hanuman received an unknown message")
-  }
+    case GetSimulationStatus(simulationId) =>
+      EventHandler.debug(this, "Hanuman was requested to provide status for simulation " + simulationId)
+      self.channel ! simulationStatuses.get(simulationId)
 
-  private def createWorkVisor() {
-    val workVisorRef = Actor.actorOf(
-      new WorkVisor(simulationID, maxTicks, document, workCellsPerVisor, textMatchMapRef))
-    self.link(workVisorRef)
-    workVisorRef.start()
+    case NewSimulation(simulationId, workCellsPerVisor, maxTicks, document) =>
+      EventHandler.debug(this, "Hanuman was requested create new simulation " + simulationId)
+      simulationStatuses += simulationId -> new SimulationStatus(simulationId, maxTicks, workCellsPerVisor)
+      val simulationSupervisorRef = Actor.actorOf(new SimulationSupervisor(simulationId, maxTicks, document, workCellsPerVisor))
+      self.link(simulationSupervisorRef)
+      simulationSupervisors += simulationId -> simulationSupervisorRef
+      simulationSupervisorRef.start()
+
+    case SimulationStopped(simulationId) =>
+      EventHandler.debug(this, "Hanuman: SimulationSupervisor acknowledged a Stop message")
+      EventHandler.notify(SimulationStopped(simulationId)) // signal completion to non-actor
+
+    case StopSimulation(simulationId) =>
+      EventHandler.debug(this, "Hanuman received a StopSimulation message for " + simulationId)
+      simulationSupervisors.get(simulationId) match {
+        case Some(simulationSupervisorRef) => simulationSupervisorRef ! Stop
+        case None =>
+      }
+      simulationSupervisors -= simulationId
+
+    /** sent every tick by every simulationSupervisor */
+    case SimulationStatus(simulationId, maxTicks, workCellsPerVisor, complete, bestTextMatch, tick, timeStarted) =>
+      simulationStatuses += simulationId ->
+        SimulationStatus(simulationId, maxTicks, workCellsPerVisor, complete, bestTextMatch, tick, timeStarted)
   }
 }

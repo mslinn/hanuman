@@ -1,6 +1,6 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="HanumanSuite" type="ScalaTestRunConfiguration" factoryName="ScalaTest">
-    <module name="default-57e5b8" />
+    <module name="default-bac870" />
     <setting name="path" value="net.interdoodle.hanuman.HanumanSuite" />
     <setting name="package" value="" />
     <setting name="vmparams" value="" />

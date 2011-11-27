@@ -2,7 +2,7 @@ import com.typesafe.startscript.StartScriptPlugin
 
 seq(StartScriptPlugin.startScriptForClassesSettings: _*)
 
-name := "hanuman"
+name := "Hanuman"
 
 version := "0.1"
 
@@ -19,9 +19,10 @@ resolvers ++= Seq(
 )
 
 libraryDependencies ++= Seq(
-  "se.scalablesolutions.akka" % "akka-actor" % "1.2" % "compile" withSources(),
-  "se.scalablesolutions.akka" % "akka-stm" % "1.2" % "compile" withSources(),
-  "se.scalablesolutions.akka" % "akka-typed-actor" % "1.2" % "compile" withSources(),
-  "com.reportgrid" % "blueeyes_2.9.1" % "0.4.26" % "compile" withSources(),
-  "org.scalatest" %% "scalatest" % "1.6.1" % "test" withSources()
+  "org.scala-tools.time"      %%  "time"            % "latest.integration" % "compile",
+  "se.scalablesolutions.akka" %  "akka-actor"       % "latest.integration" % "compile" withSources(),
+  "se.scalablesolutions.akka" %  "akka-stm"         % "latest.integration" % "compile" withSources(),
+  "se.scalablesolutions.akka" %  "akka-typed-actor" % "latest.integration" % "compile" withSources(),
+  "com.reportgrid"            %% "blueeyes"         % "0.4.26"             % "compile" withSources(),
+  "org.scalatest"             %% "scalatest"        % "latest.integration" % "test"    withSources()
 )

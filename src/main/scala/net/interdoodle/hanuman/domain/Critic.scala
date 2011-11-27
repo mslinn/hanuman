@@ -5,11 +5,12 @@ import net.interdoodle.hanuman.Configuration
 import net.interdoodle.hanuman.message.{NoMatch, TextMatch}
 
 
-/**
+/** Critics and Monkeys were intended to evolve as a result of competition. The base functionality for Critic subclasses
+ * is defined here; subclasses might become fairly sophisticated.
  * @author Mike Slinn */
 abstract class Critic {
   var document = ""
-  private var lastTextMatch = new TextMatch(null, 0, 0, 0)
+  private var lastTextMatch = new TextMatch(null, null, 0, 0, 0)
   protected val minimumMatchLength = Configuration().minimumMatchLength
   var self:ScalaActorRef = null
 
@@ -20,11 +21,11 @@ abstract class Critic {
   protected var prevPageLengths = 0
 
   /** Set by subclass */
-  protected[domain] var textMatch = new TextMatch(null, 0, 0, 0)
+  protected[domain] var textMatch = new TextMatch(null, null, 0, 0, 0)
 
 
   /** Update textMatch; subclass must call super.assessText() as last line of this overridden method */
-  def assessText(document:String, monkeyRef:ScalaActorRef, page:String) {
+  def assessText(document:String, simulationId:String, monkeyRef:ScalaActorRef, page:String) {
     takeAction()
   }
 

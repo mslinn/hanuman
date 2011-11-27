@@ -1,17 +1,15 @@
 package net.interdoodle.hanuman.domain
 
 import akka.actor.Uuid
-import akka.stm.Ref
 import collection.mutable.HashMap
-import net.interdoodle.hanuman.message.TextMatch
+import net.interdoodle.hanuman.message.{TextMatch, SimulationStatus}
 
 
 /** Hanuman domain types
  * @author Mike Slinn */
-
 package object types {
-  type Simulations = HashMap[String, TextMatchMap]
+  /** Map of simulationID -> SimulationStatus */
+  type SimulationStatuses = HashMap[String, SimulationStatus]
   type TextMatchMap = HashMap[Uuid, TextMatch]
   type TextMatchMapImmutable = scala.collection.immutable.HashMap[Uuid, TextMatch]
-  type TextMatchMapRef = Ref[TextMatchMap]
 }

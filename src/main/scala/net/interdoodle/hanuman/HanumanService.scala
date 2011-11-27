@@ -2,7 +2,10 @@ package net.interdoodle.hanuman
 
 import akka.actor.{ActorRef, Actor}
 import akka.event.EventHandler
-import akka.stm.Ref
+import collection.mutable.HashSet
+import java.util.UUID
+import message._
+import net.lag.logging.Logger
 
 import blueeyes.BlueEyesServiceBuilder
 import blueeyes.concurrent.Future
@@ -12,42 +15,34 @@ import blueeyes.core.http.MimeTypes._
 import blueeyes.core.http.combinators.HttpRequestCombinators
 import blueeyes.core.service.{HttpService, HttpServiceContext}
 import blueeyes.json.JsonAST._
+import blueeyes.json.Printer
 
 import domain.types._
-import java.util.UUID
-import message.{SimulationComplete, GetSimulationStatus, TextMatch, SimulationStatuses}
-import net.interdoodle.hanuman.domain.Hanuman
-import net.lag.logging.Logger
+import domain.Hanuman
 
 
-/**
+/** BlueEyes service handler for Hanuman requests.
  * @author Mike Slinn */
 trait HanumanService extends BlueEyesServiceBuilder
-  with HttpRequestCombinators
-  with BijectionsChunkString
-  with BijectionsChunkJson {
-
-  private var hanuman:Option[Hanuman] = None
-  private var hanumanRefOption:Option[ActorRef] = None
-  private val simulations:Simulations = new Simulations()
-
-  /** Contains simulationID->Option[WorkVisorRef] map */
-  private var simulationStatus = new SimulationStatuses(false, simulations)
-  private val simulationStatusRef = new Ref(simulationStatus)
-
+    with HttpRequestCombinators
+    with BijectionsChunkString
+    with BijectionsChunkJson {
   private val contentUrl = System.getenv("CONTENT_URL")
-
+  private val hanumanRefOption:Option[ActorRef] = Some(Actor.actorOf(new Hanuman))
+  private val simulationIds = new HashSet[String]
   private val staticContent = <html xmlns="http://www.w3.org/1999/xhtml">
                                 <head>
+                                  <title>Hanuman Simulation</title>
+                                  <link rel="stylesheet" type="text/css" href={contentUrl + "jquery-ui-1.8.16.css"} />
+                                  <link rel="stylesheet" type="text/css" href={contentUrl + "stylesheet.css"} />
                                   <script type="text/javascript" src={contentUrl + "jquery-1.7.min.js"}></script>
+                                  <script type="text/javascript" src={contentUrl + "jquery-ui-1.8.16.min.js"}></script>
                                   <script type="text/javascript" src={contentUrl + "index.js"}></script>
                                 </head>
-                                <body>
-                                </body>
+                                <body></body>
                               </html>
-
   val versionMajor = 0
-  val versionMinor = 1
+  val versionMinor = 2
 
   val hanumanService:HttpService[ByteChunk] = service("hanumanService", versionMajor + "." + versionMinor) {
     requestLogging {
@@ -57,29 +52,58 @@ trait HanumanService extends BlueEyesServiceBuilder
             request {
               path("/") {
                 contentType(application/json) {
-                  get { requestParam:HttpRequest[JValue] => reqHello(log) } ~
-                  path('operation) {
-                    get { request => reqOperation(log, request) }
-                  } ~
-                  path('operation/'id) {
-                    get { request => reqDoCommand(log, request) }
-                  } ~
-                  path('operation/'id/'param) {
-                    get { request => reqDoCommandParam(log, request) }
-                  } ~
-                  orFail(HttpStatusCodes.NotFound, "No handler found that could handle this request.") // return HTTP status 404
+                  get { requestParam:HttpRequest[JValue] => reqVersion(log) } ~
+                    path('operation) {
+                      get { request => reqOperation(log, request) }
+                    } ~
+                    path('operation/'id) {
+                      get { request => reqDoCommand(log, request) }
+                    } ~
+                    path('operation/'id/'param) {
+                      get { request => reqDoCommandParam(log, request) }
+                    } ~
+                    orFail(HttpStatusCodes.NotFound, "No handler found that could handle this request.") // return HTTP status 404
                 } ~
-                produce(text/html) {
-                  request: HttpRequest[ByteChunk] =>
-                    Future.sync(HttpResponse[String](content = Some(staticContent.buildString(true))))
-                }
+                  produce(text/html) {
+                    request: HttpRequest[ByteChunk] =>
+                      Future.sync(HttpResponse[String](content = Some(staticContent.buildString(true))))
+                  }
               }
             }
       }
     }
   }
 
-  private def reqHello[T, S](log:Logger) = {
+  /* Mechanism to detect completion of a simulation; Hanuman also sets a completion flag in
+     simulationResults. This shown how a non-actor can retrieve results from an actor. */
+  EventHandler.addListener(Actor.actorOf(new Actor {
+    self.dispatcher = EventHandler.EventHandlerDispatcher
+
+    def receive = {
+      case EventHandler.Error(cause, instance, message) =>
+        EventHandler.error(this, instance.toString + "\n" + message.toString + "\n" + cause.toString)
+
+      case EventHandler.Warning(instance, message) =>
+        EventHandler.error(this, instance.toString + "\n" + message.toString)
+
+//      case EventHandler.Info(instance, message) =>
+//        EventHandler.info(this, instance.toString + "\n" + message.toString)
+
+      case EventHandler.Debug(instance, message) =>
+        EventHandler.debug(this, instance.toString + "\n" + message.toString)
+
+      case SimulationStopped(simulationID) =>
+        EventHandler.info(this, "Notify client that simulation " + simulationID + " is done")
+
+      case _ =>
+        // ignore
+    }
+  }))
+
+  hanumanRefOption.get.start()
+
+
+  private def reqVersion[T, S](log:Logger) = {
     val json = JString("Hanuman v" + versionMajor.toString + "." + versionMinor.toString)
     val response = HttpResponse[JValue](content = Some(json))
     log.info(response.toString())
@@ -89,27 +113,9 @@ trait HanumanService extends BlueEyesServiceBuilder
   private def reqOperation[T, S](log:Logger, request:HttpRequest[T]):Future[HttpResponse[JValue]] = {
     val operation = request.parameters('operation)
     if (operation=="newSimulation") {
-      val document = Configuration().defaultDocument
-      val simulationID = UUID.randomUUID().toString
-      simulationStatus.putSimulation(simulationID, new TextMatchMap())
-      simulationStatusRef.set(simulationStatus)
-      // Future simulation parameters might include workCellsPerVisor and maxTicks so pass those values to Hanuman
-      hanumanRefOption = Some(Actor.actorOf(
-        new Hanuman(simulationID, Configuration().workCellsPerVisor, Configuration().maxTicks, document, simulationStatusRef)))
-
-      /* This is one way to detect completion; it is redundant because Hanuman sets a completion flag in
-         simulationResults but I left it as an example of how a non-actor can retrieve results from an actor.
-         The handler could also shut down all actors if desired. */
-      EventHandler.addListener(Actor.actorOf(new Actor {
-        self.dispatcher = EventHandler.EventHandlerDispatcher
-
-        def receive = {
-          case SimulationComplete(simulationID) =>
-            println("Notify client that simulation " + simulationID + " is done")
-        }
-      }))
-
-      Future.sync(HttpResponse(content = Some(JObject(List(JField("id", simulationID))))))
+      val simulationId = UUID.randomUUID().toString
+      simulationIds += simulationId
+      Future.sync(HttpResponse(content = Some(JObject(List(JField("simulationId", simulationId))))))
     } else {
       val msg = "The only operation that can be without a simulationID is newSimulation. You specified '" + operation + "'"
       Future.sync(HttpResponse(status=HttpStatus(400, msg), content = Some(msg)))
@@ -119,57 +125,72 @@ trait HanumanService extends BlueEyesServiceBuilder
   private def reqDoCommand[T, S](log:Logger, request:HttpRequest[T]):Future[HttpResponse[JValue]] = {
     val operation = request.parameters('operation).toString
     val simulationID = request.parameters('id).toString
-    val simulation = simulationStatus.getSimulation(simulationID)
     Future.sync(HttpResponse(
-      content = Some(if (simulation==None) {
-        "Simulation with ID " + simulationID + " does not exist"
-      } else
+      content = Some(if (simulationIds.contains(simulationID)) {
         doCommand(log, operation, simulationID)
-    )))
+      } else
+        "Simulation with ID " + simulationID + " does not exist"
+      )))
   }
 
   private def reqDoCommandParam[T, S](log:Logger, request:HttpRequest[T]):Future[HttpResponse[JValue]] = {
     val operation = request.parameters('operation)
     val simulationID = request.parameters('id)
     val param = request.parameters('param)
-    val simulation = simulationStatus.getSimulation(simulationID)
     Future.sync(HttpResponse(
-      content = if (simulation==None)
-        Some("Simulation with ID " + simulationID + " does not exist")
-      else
-        Some("Simulation ID=" + simulationID + "; operation: '" + operation + "'"))
+      content = if (simulationIds.contains(simulationID))
+        Some("Simulation ID=" + simulationID + "; operation: '" + operation + "'")
+    else
+        Some("Simulation with ID " + simulationID + " does not exist"))
     )
   }
 
-  private def doCommand(log:Logger, command:String, simulationID:String):JValue = command match {
+  private def doCommand(log:Logger, command:String, simulationId:String):JValue = command match {
     case "run" =>
-      val hanumanRef = hanumanRefOption.get
-      hanumanRef.start
-        JObject(List(JField("result", "Updated simulationStatus with new Hanuman instance " + hanumanRef.uuid + " and started hanuman")))
+      // Future simulation parameters sent from web client might include workCellsPerVisor, maxTicks and document
+      // so pass those values here
+      hanumanRefOption.get ! NewSimulation(simulationId, Configuration().workCellsPerVisor,
+                                           Configuration().maxTicks, Configuration().defaultDocument)
+      val result = simulationStatusAsJson(simulationId)
+      println("Result=" + Printer.compact(Printer.render(result)))
+      result
 
     case "status" =>
-      simulationStatusAsJson(simulationID)
+      simulationStatusAsJson(simulationId)
 
     case "stop" =>
       val hanumanRef = hanumanRefOption.get
-      val future = hanumanRef ? "stop"
+      val future = hanumanRef ? StopSimulation(simulationId)
       future.await // block until hanuman shuts down
-      simulationStatusAsJson(simulationID)
+      simulationStatusAsJson(simulationId)
 
     case _ =>
       command + " is an unknown command"
   }
 
   /** @return status of simulation with given simulationID as JSON */
-  private def simulationStatusAsJson(simulationID:String) = {
-    val resultOption = (hanumanRefOption.get ? GetSimulationStatus(simulationID)).await.get
+  private def simulationStatusAsJson(simulationId:String):JValue = {
+    val resultOption = (hanumanRefOption.get ? GetSimulationStatus(simulationId)).await.get
     resultOption match {
-      case Some(textMatchMap) =>
-        val result = JArray({
-            for (kv <- textMatchMap.asInstanceOf[TextMatchMap])
-              yield kv._2.decompose
-        }.toList)
-        JObject(JField("result", result) :: Nil)
+      case Some(result) =>
+        val simulationStatus = result.asInstanceOf[SimulationStatus]
+        val textMatch = simulationStatus.bestTextMatch
+        val document = Configuration().defaultDocument
+        println(simulationStatus.tick, document.length, textMatch.length)
+        val portionMatched = if (textMatch.length>0)
+          document.substring(0, scala.math.min(document.length, textMatch.length)-1)
+        else
+          ""
+        JObject(
+          JField("result",
+            simulationStatus.decompose merge JObject(
+              JField("documentLength", document.length()) ::
+              JField("matchedPortion", portionMatched) ::
+              JField("version", versionMajor + "." + versionMinor) ::
+              Nil
+            )
+          ) :: Nil
+        )
 
       case None => // time out
         JString("result")

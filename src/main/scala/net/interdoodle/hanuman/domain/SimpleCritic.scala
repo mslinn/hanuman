@@ -11,10 +11,10 @@ class SimpleCritic extends Critic {
   private val log = Logger.get
 
 
-  override def assessText(document:String, monkeyRef:ScalaActorRef, page:String) {
+  override def assessText(document:String, simulationId:String, workCellRef:ScalaActorRef, page:String) {
     val docMatches = for (i <- 0 to page.length;
       val len = matchLen(document, page.substring(i)) if len>0
-    ) yield TextMatch(monkeyRef, carriedMatchLength+len, i+prevPageLengths, len + i)
+    ) yield TextMatch(simulationId, workCellRef, carriedMatchLength+len, i+prevPageLengths, len + i)
     // REPL accepts: docMatches.toList.map {s => (s.length, s)} sortBy(_._1) head
     // ...but Scala compiler does not
     log.debug("docMatches", docMatches)
@@ -28,7 +28,7 @@ class SimpleCritic extends Critic {
         0
       textMatch = longestMatch.sortBy(_._1).last._2 // side effect, bad dog!
       log.debug("textMatch", textMatch)
-      super.assessText(document, monkeyRef, page)
+      super.assessText(document, simulationId, workCellRef, page)
     }
   }
 

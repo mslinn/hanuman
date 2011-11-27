@@ -7,7 +7,7 @@ import net.interdoodle.hanuman.message.TypingRequest
 
 
 /** Encapsulates a Monkey instance and a Critic instance. Both classes have no knowledge of the other. Both classes
- * can be extended to be more sophisticated. Critics carry state for Monkeys.
+ * can be extended to be more sophisticated. Critics carry state for Monkeys. Critic subclasses are interchangeable.
  * @author Mike Slinn */
 class WorkCell[C <: Critic](val document:String, val letterProbability:LetterProbabilities)
                            (val criticFactory:() => C) extends Actor {
@@ -21,19 +21,16 @@ class WorkCell[C <: Critic](val document:String, val letterProbability:LetterPro
 
 
 
-  // TODO register with WorkVisor after restart
+  // TODO register with SimulationSupervisor after restart
 
   def receive = {
-    case TypingRequest(workCellRef) =>
+    case TypingRequest(simulationId, workCellRef) =>
       try {
-        EventHandler.debug(this, workCellRef.uuid + " received TypingRequest")
+        EventHandler.debug(this, "WorkCell received a TypingRequest")
         val page = monkey.generatePage
-        critic.assessText(document, workCellRef, page) // notifies WorkVisor of passage match if necessary
+        critic.assessText(document, simulationId, workCellRef, page) // notifies SimulationSupervisor of passage match if necessary
       } catch {
         case e:Exception => EventHandler.debug(this, e.toString)
       }
-
-    case _ =>
-      EventHandler.info(this, "WorkCell received an unknown message: " + self)
   }
 }
