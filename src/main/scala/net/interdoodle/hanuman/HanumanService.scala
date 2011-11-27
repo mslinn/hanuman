@@ -34,8 +34,10 @@ trait HanumanService extends BlueEyesServiceBuilder
   private val staticContent = <html xmlns="http://www.w3.org/1999/xhtml">
                                 <head>
                                   <title>Hanuman Simulation</title>
+                                  <link href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8/themes/base/jquery-ui.css" rel="stylesheet" type="text/css" />
+                                  <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.7/jquery.min.js"></script>
+                                  <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8/jquery-ui.min.js"></script>
                                   <link rel="stylesheet" href={contentUrl + "stylesheet.css"} type="text/css" />
-                                  <script type="text/javascript" src={contentUrl + "jquery-1.7.min.js"}></script>
                                   <script type="text/javascript" src={contentUrl + "index.js"}></script>
                                 </head>
                                 <body>

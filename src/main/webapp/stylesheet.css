@@ -44,9 +44,19 @@ h1 { font-size: 18pt }
 
 .matchedPortion {
     font-style: italic;
-    margin-top: 6pt;
+    margin-top: 12pt;
     overflow: auto;
     max-height: 2.5in;
+}
+
+.progressBar {
+    background: #ccc;
+    height: 10px;
+    width: 300px;
+}
+
+.progressBar > div {
+    background: green;
 }
 
 .results {

@@ -47,7 +47,6 @@ $(function() {
         if (debug==true)
             $("#debug").append("onRunSuccess(): About to check for data.result<br/>\n");
         if (data.result) {
-            //$("#results").append("<li>" + data.result + "</li>");
             onGetSimulationStatus(data)
             intervalTimer = window.setInterval(getSimulationStatus, pollInterval);
         }
@@ -71,6 +70,8 @@ $(function() {
             simulationId = data.result.simulationId;
             $("#debug").append("Tick " + data.result.tick +": " + data.result.matchedPortion + "<br/>\n")
                        .prop({ scrollTop: $("#debug").prop("scrollHeight") });
+            var percentMatched = (100.0 * data.result.matchedPortion.length) / data.result.documentLength;
+            $("#debug").append("percentMatched: " + percentMatched + "<br/>");
             $("#documentLength") .html(data.result.documentLength);
             $("#version")        .html(data.result.version);
             $("#simulationId")   .html(data.result.simulationId);
@@ -87,6 +88,9 @@ $(function() {
             $("#debug").append("previousMatchedPortion=" + previousMatchedPortion + "<br/>\n");
             $("#debug").append("newMatchedPortion=" + newMatchedPortion + "<br/>\n");
             $("#debug").append("complete=" + data.result.complete + "<br/>\n");
+            $("#progressTick").progressbar("value", data.result.percentComplete);
+            $("#progressMatched").progressbar("value", percentMatched);
+
             previousMatchedPortion = data.result.matchedPortion;
             if (data.result.tick>=data.result.maxTicks || data.result.complete==true) {
                 window.clearInterval(intervalTimer);
@@ -139,11 +143,15 @@ $(function() {
                  .append('<span class=label>Started at</span> <span id="started"></span>; ' +
                          '<span class=label>elapsed time</span> <span id="elapsed">00:00:00</span>; ' +
                          'simulating <span id="monkeys">0</span> monkeys typing semi-randomly.<br/><br/>\n')
-                 .append('<span class=label>Tick</span> <span id="tick">0</span> of <span id="maxTicks"></span>; ' +
-                         '<span id="percentComplete"></span>% complete <br/><br/>\n')
-                 .append('<span id="match">0</span> characters of <span id="documentLength">0</span> ' +
-                         'matched so far:<br/>\n')
+                 .append('<div><span class=label>Tick</span> <span id="tick">0</span> of <span id="maxTicks"></span>; ' +
+                         '<span id="percentComplete"></span>% complete </div>\n')
+                 .append('<div id="progressTick" width="200" class="progressBar"></div>')
+                 .append('<div style="margin-top: 12pt"><span id="match">0</span> characters of <span id="documentLength">0</span> ' +
+                         'matched so far:</div>\n')
+                 .append('<div id="progressMatched" width="200" class="progressBar"></div>')
                  .append('<div id="matchedPortion" class="matchedPortion"></div>\n').hide();
+    $("#progressTick")   .progressbar();
+    $("#progressMatched").progressbar();
     $("#newSimulationButton").click(createSimulation);
     $("#debugCheckbox").click(toggleDebug);
 })
