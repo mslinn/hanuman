@@ -47,6 +47,11 @@ h1 { font-size: 18pt }
     margin-top: 12pt;
     overflow: auto;
     max-height: 2.5in;
+    background-color: #ffd700;
+    padding-left: 4px;
+    padding-right: 4px;
+    padding-top: 2px;
+    padding-bottom: 2px;
 }
 
 .progressBar {

@@ -136,18 +136,21 @@ $(function() {
                 '<img src="https://nav.heroku.com/images/logos/logo.png" ' +
                 'style="position: absolute; bottom: 5; right: 5" /></a>\n');
     $("#debug").hide()
-    $("#results").append('<span class=label>Simulation ID</span> <span id="simulationId" ' +
+    $("#results").append('<div></div><span class=label>Simulation ID</span> <span id="simulationId" ' +
                          'style="font-family: courier;mono">' + simulationId + '</span> &nbsp;&nbsp;')
-                 .append('<button id="stopSimulationButton">Stop simulation</button>\n')
+                 .append('<button id="stopSimulationButton">Stop simulation</button></div>\n')
                  .append('<br/><br/>\n')
-                 .append('<span class=label>Started at</span> <span id="started"></span>; ' +
-                         '<span class=label>elapsed time</span> <span id="elapsed">00:00:00</span>; ' +
-                         'simulating <span id="monkeys">0</span> monkeys typing semi-randomly.<br/><br/>\n')
-                 .append('<div><span class=label>Tick</span> <span id="tick">0</span> of <span id="maxTicks"></span>; ' +
-                         '<span id="percentComplete"></span>% complete </div>\n')
+                 .append('<div></div><span class=label>Started at</span> <span id="started"></span>; ' +
+                         '<span class=label>elapsed time</span> <span id="elapsed">00:00:00</span><span class=label>; ' +
+                         'simulating</span> <span id="monkeys">0</span> ' +
+                         '<span class=label>monkeys typing semi-randomly.</span></div>\n')
+                 .append('<div style="margin-top: 12pt"><span class=label>Tick</span> <span id="tick">0</span> ' +
+                         '<span class=label>of</span> <span id="maxTicks"></span>; ' +
+                         '<span id="percentComplete"></span><span class=label>% complete:</span></div>\n')
                  .append('<div id="progressTick" width="200" class="progressBar"></div>')
-                 .append('<div style="margin-top: 12pt"><span id="match">0</span> characters of <span id="documentLength">0</span> ' +
-                         'matched so far:</div>\n')
+                 .append('<div style="margin-top: 12pt"><span id="match">0</span> ' +
+                         '<span class=label>characters of</span> <span id="documentLength">0</span> ' +
+                         '<span class=label>matched so far:</span></div>\n')
                  .append('<div id="progressMatched" width="200" class="progressBar"></div>')
                  .append('<div id="matchedPortion" class="matchedPortion"></div>\n').hide();
     $("#progressTick")   .progressbar();
