@@ -44,7 +44,7 @@ h1 { font-size: 18pt }
 
 .matchedPortion {
     font-style: italic;
-    margin-top: 12pt;
+    margin-top: 0;
     overflow: auto;
     max-height: 2.5in;
     background-color: #ffd700;

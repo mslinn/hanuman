@@ -7,18 +7,18 @@ $(function() {
     var simulationId;
 
 
-    function createSimulation() {
+    function newSimulation() {
         $.ajax("/newSimulation", {
             contentType: "application/json",
             success: onNewSimulation
         });
     }
 
-    function getSimulationStatus() {
-        $("#debug").append("getSimulationStatus(): About to invoke status<br/>\n");
+    function status() {
+        $("#debug").append("status(): About to invoke status<br/>\n");
         $.ajax("/status/" + simulationId, {
             contentType: "application/json",
-            success: onGetSimulationStatus,
+            success: onStatus,
             error: onError
         });
     }
@@ -31,7 +31,7 @@ $(function() {
     // {"result":{"complete":false,"simulationId":"a2f57249-d739-49c5-b54b-596623013de7","length":0,
     //   "formattedElapsedTime":"00:00:00","formattedTimeStarted":"02:10:40 PM","maxTicks":100,"percentComplete":0,
     //   "tick":0,"monkeys":10,"matchedPortion":"","version":"0.2"}}
-    function onGetSimulationStatus(data) {
+    function onStatus(data) {
         if (data.result) {
             simulationId = data.result.simulationId;
             $("#debug").append("Tick " + data.result.tick +": " + data.result.matchedPortion + "<br/>\n")
@@ -86,8 +86,8 @@ $(function() {
         if (debug==true)
             $("#debug").append("onRunSuccess(): About to check for data.result<br/>\n");
         if (data.result) {
-            onGetSimulationStatus(data)
-            intervalTimer = window.setInterval(getSimulationStatus, pollInterval);
+            onStatus(data)
+            intervalTimer = window.setInterval(status, pollInterval);
         }
     }
 
@@ -95,7 +95,7 @@ $(function() {
         if (debug==true)
             $("#debug").append("onRunSuccess(): About to check for data.result<br/>\n");
         if (data.result) {
-            onGetSimulationStatus(data)
+            onStatus(data)
         }
         if (intervalTimer)
             window.clearInterval(intervalTimer);
@@ -152,25 +152,27 @@ $(function() {
                 '<img src="https://nav.heroku.com/images/logos/logo.png" ' +
                 'style="position: absolute; bottom: 5; right: 5" /></a>\n');
     $("#debug").hide()
-    $("#results").append('<div></div><span class=label>Simulation ID</span> <span id="simulationId" ' +
+    $("#results").append('<div></div><span class="label">Simulation ID</span> <span id="simulationId" ' +
                          'style="font-family: courier;mono">' + simulationId + '</span> &nbsp;&nbsp;')
                  .append('<button id="stopSimulationButton">Stop simulation</button></div>\n')
                  .append('<br/><br/>\n')
-                 .append('<div></div><span class=label>Started at</span> <span id="started"></span>; ' +
-                         '<span class=label>elapsed time</span> <span id="elapsed">00:00:00</span><span class=label>; ' +
+                 .append('<div></div><span class="label">Started at</span> <span id="started"></span>; ' +
+                         '<span class="label">elapsed time</span> <span id="elapsed">00:00:00</span><span class="label">; ' +
                          'simulating</span> <span id="monkeys">0</span> ' +
-                         '<span class=label>monkeys typing semi-randomly.</span></div>\n')
-                 .append('<div style="margin-top: 12pt"><span class=label>Tick</span> <span id="tick">0</span> ' +
-                         '<span class=label>of</span> <span id="maxTicks"></span>; ' +
-                         '<span id="percentComplete"></span><span class=label>% complete:</span></div>\n')
+                         '<span class="label">monkeys typing semi-randomly.</span></div>\n')
+                 .append('<div style="margin-top: 12pt"><span class="label">Tick</span> <span id="tick">0</span> ' +
+                         '<span class="label">of</span> <span id="maxTicks"></span>; ' +
+                         '<span id="percentComplete"></span><span class="label">% complete:</span></div>\n')
                  .append('<div id="progressTick" width="200" class="progressBar"></div>')
                  .append('<div style="margin-top: 12pt"><span id="match">0</span> ' +
-                         '<span class=label>characters of</span> <span id="documentLength">0</span> ' +
-                         '<span class=label>matched so far:</span></div>\n')
+                         '<span class="label">characters of</span> <span id="documentLength">0</span> ' +
+                         '<span class="label">matched so far:</span></div>\n')
                  .append('<div id="progressMatched" width="200" class="progressBar"></div>')
+                 .append('<p style="margin-bottom: 0" class="label">Portion of document matched so far:</p>')
                  .append('<div id="matchedPortion" class="matchedPortion"></div>\n').hide();
     $("#progressTick")   .progressbar();
     $("#progressMatched").progressbar();
-    $("#newSimulationButton").click(createSimulation);
+    $("#debugCheckbox").prop("checked", debug);
+    $("#newSimulationButton").click(newSimulation);
     $("#debugCheckbox").click(toggleDebug);
 })
