@@ -161,7 +161,7 @@ trait HanumanService extends BlueEyesServiceBuilder
     case "stop" =>
       val hanumanRef = hanumanRefOption.get
       val future = hanumanRef ? StopSimulation(simulationId)
-      future.await // block until hanuman shuts down
+      future.await // block until hanuman shuts down; times out even though Hanuman does shut down
       simulationStatusAsJson(simulationId)
 
     case _ =>
