@@ -61,6 +61,9 @@ Marshalling changes via a sequence of ````ticks```` reduces potential conflicts.
 Run Locally
 -----------
 
+This project requires static assets to be served from one domain (preferably a content delivery network) and the application to be served from another domain.
+You can debug both servers locally if you wish.
+
 1. Clone this [git repo](https://github.com/mslinn/hanuman).
 
 2. Compile the app and create a start script:
@@ -71,7 +74,7 @@ Run Locally
 
         export PORT=8080
 
-4. Start the static content server:
+4. Start the local static content server (only needed when debugging it):
 
         target/start net.interdoodle.example.HttpStaticFileServer
 
@@ -111,23 +114,31 @@ Mike Slinn has deployed the app to http://hollow-winter-3011.herokuapp.com/
 
 You can deploy it to your own Heroku app instance this way:
 
-1. Clone the [git repo](https://github.com/mslinn/hanuman).
+1. You can set up [AWS CloudFront](http://aws.amazon.com/cloudfront/) to act as the content repository, or use another CDN.
 
-2. Install the [Heroku client](http://toolbelt.herokuapp.com/) and set up ssh keys.
+2. Clone the [git repo](https://github.com/mslinn/hanuman).
 
-3. Authenticate with Heroku:
+3. Install the [Heroku client](http://toolbelt.herokuapp.com/) and set up ssh keys.
+
+4. Authenticate with Heroku:
 
         heroku login
 
-4. Create your new app instance on Heroku:
+5. Create your new app instance on Heroku:
 
         heroku create --stack cedar
 
-5. Add your Heroku app instance as a remote git repository. Substitute your Heroku app instance for ````hollow-winter-3011````:
+6. Add your Heroku app instance as a remote git repository. 
+Substitute your Heroku app instance for ````hollow-winter-3011````:
 
         git remote add heroku git@heroku.com:hollow-winter-3011.git
 
-6. Push the Hanuman app to Heroku; it will automatically be (re)built and run.
+7. Set up a Heroku environment variable called ````CONTENT_URL```` and point it to your content delivery network.
+See the [Heroku docs](http://devcenter.heroku.com/articles/config-vars)
+
+        heroku config:add CONTENT_URL=http://mycdn.com:1234/blah
+
+8. Push the Hanuman app to Heroku; it will automatically be (re)built and run.
 
         git push heroku master
 
