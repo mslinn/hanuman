@@ -67,6 +67,24 @@ Run Locally
 
         sbt stage
 
+3. Set the PORT environment variable for the static content server:
+
+        export PORT=8080
+
+4. Start the static content server:
+
+        target/start net.interdoodle.example.HttpStaticFileServer
+
+5. Set the environment variables for the app server:
+
+        export PORT=8585
+        export MONGOLAB_URI=mongodb://127.0.0.1:27017/hello
+        export CONTENT_URL=http://localhost:8080/
+
+6. Start the app server:
+
+        target/start net.interdoodle.example.AppServer
+        
 3. Run the app:
 
         sbt run
