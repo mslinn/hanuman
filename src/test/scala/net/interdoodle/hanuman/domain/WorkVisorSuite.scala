@@ -1,6 +1,6 @@
 package net.interdoodle.hanuman.domain
 
-import akka.actor.{Actor, Uuid}
+import akka.actor.{Actor, ActorSystem, Props, Uuid}
 import net.interdoodle.hanuman.message.TextMatch
 import org.scalatest.FunSuite
 import types._
@@ -16,13 +16,14 @@ class WorkVisorSuite extends FunSuite {
     val textMatchMap = new TextMatchMap()
     val uuid = new Uuid
     textMatchMap += uuid -> textMatch
+    val system = ActorSystem("SimulationSupervisorSuite")
 
     /** Rough character frequency approximation */
     val document = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"*5 +
       "abcdefghijklmnopqrstuvwxyz"*25 +
       "0123456789"*2 +
       "`~!@#$%^&*()_-+={[}]|\\\"':;<,>.?/"
-    val simulationSupervisor = Actor.actorOf(new SimulationSupervisor(simulationID, 10, document, 10)).start()
+    val simulationSupervisor = system.actorOf(Props().withCreator(new SimulationSupervisor(simulationID, 10, document, 10))).start()
     // todo write more tests and SimulationSupervisor business logic
   }
 }

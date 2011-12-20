@@ -1,7 +1,7 @@
 package net.interdoodle.hanuman
 
-import akka.actor.{ActorRef, Actor}
-import akka.event.EventHandler
+import akka.actor.{Actor, ActorRef, ActorSystem, Props}
+import akka.util.Timeout
 import collection.mutable.HashSet
 import java.util.UUID
 import message._
@@ -28,7 +28,8 @@ trait HanumanService extends BlueEyesServiceBuilder
     with BijectionsChunkString
     with BijectionsChunkJson {
   private val contentUrl = System.getenv("CONTENT_URL")
-  private val hanumanRefOption:Option[ActorRef] = Some(Actor.actorOf(new Hanuman))
+  private val system = ActorSystem("HanumanService")
+  private val hanumanRefOption:Option[ActorRef] = Some(system.actorOf(Props[Hanuman]))
   private val simulationIds = new HashSet[String]
   private val staticContent = <html xmlns="http://www.w3.org/1999/xhtml">
                                 <head>
@@ -41,6 +42,7 @@ trait HanumanService extends BlueEyesServiceBuilder
                                 </head>
                                 <body></body>
                               </html>
+  implicit private val timeout = system.settings.ActorTimeout
   val versionMajor = 0
   val versionMinor = 2
 
@@ -76,7 +78,7 @@ trait HanumanService extends BlueEyesServiceBuilder
 
   /* Mechanism to detect completion of a simulation; Hanuman also sets a completion flag in
      simulationResults. This shown how a non-actor can retrieve results from an actor. */
-  EventHandler.addListener(Actor.actorOf(new Actor {
+  EventHandler.addListener(system.actorOf(new Actor {
     self.dispatcher = EventHandler.EventHandlerDispatcher
 
     def receive = {
@@ -160,7 +162,7 @@ trait HanumanService extends BlueEyesServiceBuilder
 
     case "stop" =>
       val hanumanRef = hanumanRefOption.get
-      val future = hanumanRef ? StopSimulation(simulationId)
+      val future = hanumanRef ? (StopSimulation(simulationId))(timeout = 5 seconds)
       future.await // block until hanuman shuts down; times out even though Hanuman does shut down
       simulationStatusAsJson(simulationId)
 
@@ -170,7 +172,7 @@ trait HanumanService extends BlueEyesServiceBuilder
 
   /** @return status of simulation with given simulationID as JSON */
   private def simulationStatusAsJson(simulationId:String):JValue = {
-    val resultOption = (hanumanRefOption.get ? GetSimulationStatus(simulationId)).await.get
+    val resultOption = (hanumanRefOption.get ? (GetSimulationStatus(simulationId))(timeout=1 seconds)).await.get
     resultOption match {
       case Some(result) =>
         val simulationStatus = result.asInstanceOf[SimulationStatus]

@@ -1,8 +1,8 @@
 package net.interdoodle.hanuman.domain
 
-import akka.actor.{ActorRef, Actor}
+import akka.actor.{Actor, ActorRef, ActorSystem, Props}
 import akka.config.Supervision.{OneForOneStrategy, Permanent}
-import akka.event.EventHandler
+import akka.event.Logging
 import net.interdoodle.hanuman.message._
 import scala.collection.mutable.HashSet
 import scala.collection.JavaConversions._
@@ -17,6 +17,8 @@ class SimulationSupervisor(val simulationId:String,
                   val maxTicks:Int,
                   val document:String,
                   val workCellsPerVisor:Int) extends Actor {
+  private val system = ActorSystem("SimulationSupervisor")
+  private val log = Logging(context.system, this)
   /** Keep simulationStatus up to date so Hanuman does not have to worry about maintaining it */
   var simulationStatus = new SimulationStatus(simulationId, maxTicks, workCellsPerVisor)
   private val documentLength = document.length()
@@ -36,7 +38,7 @@ class SimulationSupervisor(val simulationId:String,
 
   /** If any monkey finishes, we are done */
   override def postStop() {
-    EventHandler.debug(this, "Simulation stopped")
+    log.debug("Simulation stopped")
     workingCells.empty // should already be empty; no refs to WorkCells means they will be GC'd
   }
 
@@ -45,7 +47,7 @@ class SimulationSupervisor(val simulationId:String,
     simulationStatus.bestTextMatch = new TextMatch(null, null, 0, 0, 0)
     simulationStatus.tick = 1
     for (i <- 1 to workCellsPerVisor) {
-      val workCellRef = Actor.actorOf(new WorkCell[SimpleCritic](document, letterProbability)(() => new SimpleCritic))
+      val workCellRef = system.actorOf(Props().withCreator(new WorkCell[SimpleCritic](document, letterProbability)(() => new SimpleCritic)))
       self.link(workCellRef)
       workCellRef.start()
     }
@@ -54,7 +56,7 @@ class SimulationSupervisor(val simulationId:String,
 
   private def checkTick {
     if (running && simulationStatus.tick<=maxTicks) {
-      EventHandler.debug(this, "Simulation tick #" + simulationStatus.tick.toString())
+      log.debug("Simulation tick #" + simulationStatus.tick.toString())
       tick // until this WorkVisor instance is stopped
       simulationStatus.tick += 1
     } else {
@@ -68,7 +70,7 @@ class SimulationSupervisor(val simulationId:String,
       workingCells -= workCellActorRef
       self.unlink(workCellActorRef)
     }
-    EventHandler.debug(this, "All WorkCells have stopped for simulation " + simulationId)
+    log.debug("All WorkCells have stopped for simulation " + simulationId)
     self.supervisor ! SimulationStopped(simulationId)
   }
 
@@ -83,19 +85,19 @@ class SimulationSupervisor(val simulationId:String,
 
   def receive = {
     case Stop =>
-      EventHandler.debug(this, "SimulationSupervisor received Stop message")
+      log.debug("SimulationSupervisor received Stop message")
       running = false
       stopWorkCells
 
     case NoMatch(workCellRef) =>
       workingCells -= workCellRef
       self.supervisor ! simulationStatus.copy()
-      EventHandler.debug(this, "tick " + simulationStatus.tick + "; " + workingCells.size + "; " + "workingCells (no match)")
+      log.debug("tick " + simulationStatus.tick + "; " + workingCells.size + "; " + "workingCells (no match)")
       if (workingCells.size==0)
         checkTick
 
     case TextMatch(simulationId, workCellRef, matchLength, matchStart, matchEnd) =>
-      EventHandler.debug(this, "Simulation " + simulationId + " matched " + matchLength + " characters from " + matchStart + " to " + matchEnd)
+      log.debug("Simulation " + simulationId + " matched " + matchLength + " characters from " + matchStart + " to " + matchEnd)
       if (matchLength>simulationStatus.bestTextMatch.length) {
         simulationStatus.bestTextMatch = TextMatch(simulationId, workCellRef, matchLength, matchStart, matchEnd)
       }
@@ -107,7 +109,7 @@ class SimulationSupervisor(val simulationId:String,
         self.supervisor ! DocumentMatch(simulationId, matchStart)
       } else {
         workingCells -= workCellRef
-        EventHandler.debug(this, "tick " + simulationStatus.tick + "; " + workingCells.size + "; " + "workingCells (match)")
+        log.debug("tick " + simulationStatus.tick + "; " + workingCells.size + "; " + "workingCells (match)")
         if (workingCells.size==0)
           checkTick
       }
