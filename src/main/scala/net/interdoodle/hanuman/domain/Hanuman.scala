@@ -33,6 +33,9 @@ class Hanuman extends Actor {
       EventHandler.debug(this, "Hanuman was requested to provide status for simulation " + simulationId)
       self.channel ! simulationStatuses.get(simulationId)
 
+    case ListSimulations() =>
+      self.channel ! simulationStatuses // TODO should a copy be sent instead?
+      
     case NewSimulation(simulationId, workCellsPerVisor, maxTicks, document) =>
       EventHandler.debug(this, "Hanuman was requested create new simulation " + simulationId)
       simulationStatuses += simulationId -> new SimulationStatus(simulationId, maxTicks, workCellsPerVisor)

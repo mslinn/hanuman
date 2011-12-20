@@ -110,18 +110,28 @@ trait HanumanService extends BlueEyesServiceBuilder
     Future.sync(response)
   }
 
+  /** Handle requests that only specify an operation without parameters */
   private def reqOperation[T, S](log:Logger, request:HttpRequest[T]):Future[HttpResponse[JValue]] = {
     val operation = request.parameters('operation)
-    if (operation=="newSimulation") {
-      val simulationId = UUID.randomUUID().toString
-      simulationIds += simulationId
-      Future.sync(HttpResponse(content = Some(JObject(List(JField("simulationId", simulationId))))))
-    } else {
-      val msg = "The only operation that can be without a simulationID is newSimulation. You specified '" + operation + "'"
-      Future.sync(HttpResponse(status=HttpStatus(400, msg), content = Some(msg)))
+    operation match {
+      case "list" =>
+        Future.sync(HttpResponse(content = Some(listSimulationsAsJson)))
+
+      case "newSimulation" =>
+        val simulationId = UUID.randomUUID().toString
+        simulationIds += simulationId
+        Future.sync(HttpResponse(content = Some(JObject(List(
+          JField("simulationId", JString(simulationId)) ::
+          JField("version", JString(versionMajor + "." + versionMinor)) ::
+          Nil)))))
+
+      case _ =>
+        val msg = "The only operation that can be without a simulationID is newSimulation. You specified '" + operation + "'"
+        Future.sync(HttpResponse(status=HttpStatus(400, msg), content = Some(msg)))
     }
   }
 
+  /** Handle requests that only specify an operation with 1 parameter */
   private def reqDoCommand[T, S](log:Logger, request:HttpRequest[T]):Future[HttpResponse[JValue]] = {
     val operation = request.parameters('operation).toString
     val simulationID = request.parameters('id).toString
@@ -168,32 +178,32 @@ trait HanumanService extends BlueEyesServiceBuilder
       command + " is an unknown command"
   }
 
+  private def listSimulationsAsJson:JValue = {
+    (hanumanRefOption.get ? ListSimulations).await.get match {
+      case Some(simulationStatuses:SimulationStatuses) =>
+        JField("result", JObject(
+          (simulationStatuses.values map {(simulationStatus:SimulationStatus) =>
+              simulationStatus.decompose
+          }).asInstanceOf[List[JField]]
+        ))
+
+      case None => // time out
+        JField("result", JString("Time out waiting for list of simulations from Hanuman"))
+    }
+  }
+
   /** @return status of simulation with given simulationID as JSON */
   private def simulationStatusAsJson(simulationId:String):JValue = {
     val resultOption = (hanumanRefOption.get ? GetSimulationStatus(simulationId)).await.get
     resultOption match {
       case Some(result) =>
         val simulationStatus = result.asInstanceOf[SimulationStatus]
-        val textMatch = simulationStatus.bestTextMatch
-        val document = Configuration().defaultDocument
-        println(simulationStatus.tick, document.length, textMatch.length)
-        val portionMatched = if (textMatch.length>0)
-          document.substring(0, scala.math.min(document.length, textMatch.length)-1)
-        else
-          ""
         JObject(
-          JField("result",
-            simulationStatus.decompose merge JObject(
-              JField("documentLength", document.length()) ::
-              JField("matchedPortion", portionMatched) ::
-              JField("version", versionMajor + "." + versionMinor) ::
-              Nil
-            )
-          ) :: Nil
+          JField("result", simulationStatus.decompose) :: Nil
         )
 
       case None => // time out
-        JString("result")
+        JString("time out waiting for list of simulations from Hanuman")
     }
   }
 }

@@ -27,6 +27,18 @@ $(function() {
         $("#debug").append("onError: " + textStatus + " "  + errorThrown +"<br/>\n")
     }
 
+    function onNewSimulation(data) {
+        if (data.simulationId) {
+            simulationId = data.simulationId;
+            //$("#debug").html("")
+            $("#newSimulationButton").hide();
+            $("#stopSimulationButton").click(stopSimulation);
+            $("#stopSimulationButton").show();
+            $("#results").show();
+            runSimulation();
+        }
+    }
+
     // data will be similar to:
     // {"result":{"complete":false,"simulationId":"a2f57249-d739-49c5-b54b-596623013de7","length":0,
     //   "formattedElapsedTime":"00:00:00","formattedTimeStarted":"02:10:40 PM","maxTicks":100,"percentComplete":0,
@@ -39,7 +51,7 @@ $(function() {
             var percentMatched = (100.0 * data.result.matchedPortion.length) / data.result.documentLength;
             $("#debug").append("percentMatched: " + percentMatched + "<br/>");
             $("#documentLength") .html(data.result.documentLength);
-            $("#version")        .html(data.result.version);
+            $("#version")        .html("0.2"); // returned by onNewSimulation
             $("#simulationId")   .html(data.result.simulationId);
             $("#started")        .html(data.result.formattedTimeStarted);
             $("#elapsed")        .html(data.result.formattedElapsedTime);
@@ -67,18 +79,6 @@ $(function() {
                 $("#newSimulationButton").show("slow");
                 running = false;
             }
-        }
-    }
-
-    function onNewSimulation(data) {
-        if (data.simulationId) {
-            simulationId = data.simulationId;
-            //$("#debug").html("")
-            $("#newSimulationButton").hide();
-            $("#stopSimulationButton").click(stopSimulation);
-            $("#stopSimulationButton").show();
-            $("#results").show();
-            runSimulation();
         }
     }
 

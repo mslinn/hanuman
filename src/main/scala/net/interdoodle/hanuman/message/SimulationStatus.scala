@@ -1,9 +1,10 @@
 package net.interdoodle.hanuman.message
 
-import blueeyes.json.JsonAST.{JBool, JInt, JField, JObject, JString}
+import blueeyes.json.JsonAST.{JBool, JInt, JField, JObject, JString, JValue}
 
 import org.joda.time.{DateTime, Period}
 import org.joda.time.format.{DateTimeFormat, PeriodFormatterBuilder}
+import net.interdoodle.hanuman.Configuration
 
 
 /** Status of one simulation.
@@ -15,12 +16,17 @@ case class SimulationStatus(simulationId:String, maxTicks:Int, workCellsPerVisor
     var tick:Int = 0,
     var timeStarted:DateTime = new DateTime) {
 
+  val document = Configuration().defaultDocument
+
+
   def decompose = JObject(
     JField("complete",             JBool(complete)) ::
+    JField("documentLength",       document.length().asInstanceOf[JValue]) ::
     JField("simulationId",         JString(simulationId)) ::
     JField("length",               JInt(bestTextMatch.length)) ::
     JField("formattedElapsedTime", JString(formattedElapsedTime)) ::
     JField("formattedTimeStarted", JString(formattedTimeStarted)) ::
+    JField("matchedPortion",       matchedPortion.asInstanceOf[JString]) ::
     JField("maxTicks",             JInt(maxTicks)) ::
     JField("percentComplete",      JInt(percentComplete)) ::
     JField("tick",                 JInt(tick)) ::
@@ -44,6 +50,15 @@ case class SimulationStatus(simulationId:String, maxTicks:Int, workCellsPerVisor
 
   def percentComplete =
       ((tick.asInstanceOf[Float] / maxTicks.asInstanceOf[Float]) * 100.0).asInstanceOf[Int]
+
+  def matchedPortion = {
+    val textMatch = bestTextMatch
+    //println(simulationStatus.tick, document.length, textMatch.length)
+    if (textMatch.length>0)
+      document.substring(0, scala.math.min(document.length, textMatch.length)-1)
+    else
+      ""
+  }
 }
 
 object SimulationStatus {
