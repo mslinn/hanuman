@@ -13,7 +13,7 @@ import types._
  * @author Mike Slinn */
 class Hanuman extends Actor {
   private val log = Logging(context.system, this)
-  private val simulationStatuses = new SimulationStatuses
+  private val simulationStatuses = new SimulationStatuses()
 
   /** Keep track of running simulations */
   private val simulationSupervisors = new HashMap[String, ActorRef].empty

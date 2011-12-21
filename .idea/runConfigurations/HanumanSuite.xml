@@ -1,11 +1,16 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="HanumanSuite" type="ScalaTestRunConfiguration" factoryName="ScalaTest">
+    <extension name="coverage" enabled="false" merge="false" sample_coverage="true" runner="idea" />
+    <extension name="scalaCoverage" />
     <module name="default-bac870" />
     <setting name="path" value="net.interdoodle.hanuman.HanumanSuite" />
     <setting name="package" value="" />
     <setting name="vmparams" value="" />
     <setting name="params" value="" />
     <setting name="workingDirectory" value="$PROJECT_DIR$" />
+    <setting name="searchForTest" value="Across module dependencies" />
+    <setting name="testName" value="" />
+    <setting name="testKind" value="Class" />
     <RunnerSettings RunnerId="Debug">
       <option name="DEBUG_PORT" value="58011" />
       <option name="TRANSPORT" value="0" />
