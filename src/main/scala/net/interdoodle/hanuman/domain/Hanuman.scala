@@ -13,7 +13,7 @@ import types._
  * @author Mike Slinn */
 class Hanuman extends Actor {
   private val log = Logging(context.system, this)
-  private val simulationStatuses = new SimulationStatuses
+  private val simulationStatuses = new SimulationStatuses()
 
   /** Keep track of running simulations */
   private val simulationSupervisors = new HashMap[String, ActorRef].empty
@@ -24,7 +24,7 @@ class Hanuman extends Actor {
     case DocumentMatch(simulationId, startIndex) =>
       log.debug("Hanuman: Simulation completed with a DocumentMatch (hooray!)")
       val simulationStatus = simulationStatuses.get(simulationId)
-      sender ! simulationStatus // signal completion
+      self.sender ! simulationStatus // signal completion
       simulationSupervisors.get(simulationId) match {
         case Some(simulationSupervisorRef) => simulationSupervisorRef ! Stop
         case None =>
@@ -33,7 +33,7 @@ class Hanuman extends Actor {
 
     case GetSimulationStatus(simulationId) =>
       log.debug("Hanuman was requested to provide status for simulation " + simulationId)
-      sender ! simulationStatuses.get(simulationId)
+      self.sender ! simulationStatuses.get(simulationId)
 
     case NewSimulation(simulationId, workCellsPerVisor, maxTicks, document) =>
       log.debug("Hanuman was requested create new simulation " + simulationId)
