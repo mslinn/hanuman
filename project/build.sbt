@@ -7,3 +7,6 @@ addSbtPlugin("com.github.mpeltonen"     % "sbt-idea"                 % "latest.m
 addSbtPlugin("com.typesafe.sbteclipse"  % "sbteclipse"               % "latest.milestone")
 
 addSbtPlugin("com.typesafe.startscript" % "xsbt-start-script-plugin" % "latest.milestone")
+
+addSbtPlugin("com.eed3si9n"             % "sbt-assembly"             % "latest.milestone")
+
