@@ -27,7 +27,7 @@ class SimulationSupervisor(val simulationId:String,
   letterProbability.add(document)
   letterProbability.computeValues()
 
-  self.lifeCycle = Permanent
+  //self.lifeCycle = Permanent // TODO what is counterpart for Akka 2?
   self.faultHandler = OneForOneStrategy(List(classOf[Throwable]), 5, 5000)
 
   private var running = false
@@ -48,8 +48,6 @@ class SimulationSupervisor(val simulationId:String,
     simulationStatus.tick = 1
     for (i <- 1 to workCellsPerVisor) {
       val workCellRef = system.actorOf(Props().withCreator(new WorkCell[SimpleCritic](document, letterProbability)(() => new SimpleCritic)))
-      self.link(workCellRef)
-      workCellRef.start()
     }
     checkTick
   }
@@ -65,20 +63,20 @@ class SimulationSupervisor(val simulationId:String,
   }
 
   private def stopWorkCells {
-    for (workCellActorRef <- self.linkedActors.values()) {
-      workCellActorRef.stop()
+    for (workCellActorRef <- context.children) {
+      context.stop(workCellActorRef)
       workingCells -= workCellActorRef
       self.unlink(workCellActorRef)
     }
     log.debug("All WorkCells have stopped for simulation " + simulationId)
-    self.supervisor ! SimulationStopped(simulationId)
+    context.parent ! SimulationStopped(simulationId)
   }
 
   /** Cause each Monkey to generate a page of semi-random text */
   private def tick {
-    for (workCellRef <- self.linkedActors.values()) {
+    for (workCellRef <- context.children) {
       workingCells += workCellRef
-      EventHandler.debug(this, "tick " + simulationStatus.tick + "; " + workingCells.size + "; " + "workingCells")
+      log.debug("tick " + simulationStatus.tick + "; " + workingCells.size + "; " + "workingCells")
       workCellRef ! TypingRequest(simulationId, workCellRef)
     }
   }
@@ -91,7 +89,7 @@ class SimulationSupervisor(val simulationId:String,
 
     case NoMatch(workCellRef) =>
       workingCells -= workCellRef
-      self.supervisor ! simulationStatus.copy()
+      context.parent ! simulationStatus.copy()
       log.debug("tick " + simulationStatus.tick + "; " + workingCells.size + "; " + "workingCells (no match)")
       if (workingCells.size==0)
         checkTick
@@ -101,12 +99,12 @@ class SimulationSupervisor(val simulationId:String,
       if (matchLength>simulationStatus.bestTextMatch.length) {
         simulationStatus.bestTextMatch = TextMatch(simulationId, workCellRef, matchLength, matchStart, matchEnd)
       }
-      self.supervisor ! simulationStatus.copy()
+      context.parent ! simulationStatus.copy()
       if (matchLength==documentLength) { // success! This has a very low probability of happening
         simulationStatus.complete = true
         workingCells.clear()
         running = false
-        self.supervisor ! DocumentMatch(simulationId, matchStart)
+        context.parent ! DocumentMatch(simulationId, matchStart)
       } else {
         workingCells -= workCellRef
         log.debug("tick " + simulationStatus.tick + "; " + workingCells.size + "; " + "workingCells (match)")

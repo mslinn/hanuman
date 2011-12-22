@@ -38,14 +38,12 @@ class Hanuman extends Actor {
     case NewSimulation(simulationId, workCellsPerVisor, maxTicks, document) =>
       log.debug("Hanuman was requested create new simulation " + simulationId)
       simulationStatuses += simulationId -> new SimulationStatus(simulationId, maxTicks, workCellsPerVisor)
-      val simulationSupervisorRef = system.actorOf(Props().withCreator(new SimulationSupervisor(simulationId, maxTicks, document, workCellsPerVisor)))
-      self.link(simulationSupervisorRef)
+      val simulationSupervisorRef = context.actorOf(Props().withCreator(new SimulationSupervisor(simulationId, maxTicks, document, workCellsPerVisor)))
       simulationSupervisors += simulationId -> simulationSupervisorRef
-      simulationSupervisorRef.start()
 
     case SimulationStopped(simulationId) =>
       log.debug("Hanuman: SimulationSupervisor acknowledged a Stop message")
-      log.notify(SimulationStopped(simulationId)) // signal completion to non-actor
+      // TODO figure out how to do this with Akka 2: EventHandler.notify(SimulationStopped(simulationId)) // signal completion to non-actor
 
     case StopSimulation(simulationId) =>
       log.debug("Hanuman received a StopSimulation message for " + simulationId)

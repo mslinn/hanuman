@@ -11,7 +11,7 @@ import akka.event.Logging
 class WorkCell[C <: Critic](val document:String, val letterProbability:LetterProbabilities)
                            (val criticFactory:() => C) extends Actor {
   private val log = Logging(context.system, this)
-  self.lifeCycle = Permanent
+  //self.lifeCycle = Permanent // TODO what is counterpart for Akka 2?
 
   private val critic = criticFactory()
   critic.self = self

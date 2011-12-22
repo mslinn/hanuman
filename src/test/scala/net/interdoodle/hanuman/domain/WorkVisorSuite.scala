@@ -23,7 +23,7 @@ class WorkVisorSuite extends FunSuite {
       "abcdefghijklmnopqrstuvwxyz"*25 +
       "0123456789"*2 +
       "`~!@#$%^&*()_-+={[}]|\\\"':;<,>.?/"
-    val simulationSupervisor = system.actorOf(Props().withCreator(new SimulationSupervisor(simulationID, 10, document, 10))).start()
+    val simulationSupervisor = system.actorOf(Props().withCreator(new SimulationSupervisor(simulationID, 10, document, 10)))
     // todo write more tests and SimulationSupervisor business logic
   }
 }

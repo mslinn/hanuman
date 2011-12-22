@@ -1,6 +1,7 @@
 package net.interdoodle.hanuman
 
 import akka.actor.{Actor, ActorRef, ActorSystem, Props}
+import akka.dispatch.Await
 import akka.util.Timeout
 import collection.mutable.HashSet
 import java.util.UUID
@@ -102,8 +103,6 @@ trait HanumanService extends BlueEyesServiceBuilder
     }
   }))
 
-  hanumanRefOption.get.start()
-
 
   private def reqVersion[T, S](log:Logger) = {
     val json = JString("Hanuman v" + versionMajor.toString + "." + versionMinor.toString)
@@ -162,8 +161,8 @@ trait HanumanService extends BlueEyesServiceBuilder
 
     case "stop" =>
       val hanumanRef = hanumanRefOption.get
-      val future = hanumanRef ? (StopSimulation(simulationId))(timeout = 5 seconds)
-      future.await // block until hanuman shuts down; times out even though Hanuman does shut down
+      val future = hanumanRef ? (StopSimulation(simulationId))
+      val result = Await.result(future, system.settings.ActorTimeout.duration).asInstanceOf[String] // block until hanuman shuts down; times out even though Hanuman does shut down
       simulationStatusAsJson(simulationId)
 
     case _ =>
@@ -172,7 +171,8 @@ trait HanumanService extends BlueEyesServiceBuilder
 
   /** @return status of simulation with given simulationID as JSON */
   private def simulationStatusAsJson(simulationId:String):JValue = {
-    val resultOption = (hanumanRefOption.get ? (GetSimulationStatus(simulationId))(timeout=1 seconds)).await.get
+    val future = hanumanRefOption.get ? (GetSimulationStatus(simulationId))
+    val resultOption = Await.result(future, system.settings.ActorTimeout.duration)
     resultOption match {
       case Some(result) =>
         val simulationStatus = result.asInstanceOf[SimulationStatus]
