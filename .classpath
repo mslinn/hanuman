@@ -24,9 +24,9 @@
   <classpathentry path="C:\Users\Mike Slinn\.ivy2\cache\javolution\javolution\bundles\javolution-5.5.1.jar" sourcepath="C:\Users\Mike Slinn\.ivy2\cache\javolution\javolution\srcs\javolution-5.5.1-sources.jar" kind="lib"></classpathentry>
   <classpathentry path="C:\Users\Mike Slinn\.ivy2\cache\org.scalaz\scalaz-core_2.9.1\jars\scalaz-core_2.9.1-6.0.2.jar" sourcepath="C:\Users\Mike Slinn\.ivy2\cache\org.scalaz\scalaz-core_2.9.1\srcs\scalaz-core_2.9.1-6.0.2-sources.jar" kind="lib"></classpathentry>
   <classpathentry path="C:\Users\Mike Slinn\.ivy2\cache\org.scala-tools.time\time_2.9.1\jars\time_2.9.1-0.5.jar" kind="lib"></classpathentry>
-  <classpathentry path="C:\Users\Mike Slinn\.ivy2\cache\com.typesafe.akka\akka-actor\jars\akka-actor-2.0-20111220-000549.jar" sourcepath="C:\Users\Mike Slinn\.ivy2\cache\com.typesafe.akka\akka-actor\srcs\akka-actor-2.0-20111220-000549-sources.jar" kind="lib"></classpathentry>
-  <classpathentry path="C:\Users\Mike Slinn\.ivy2\cache\org.scala-tools\scala-stm_2.9.1\jars\scala-stm_2.9.1-0.5-SNAPSHOT.jar" sourcepath="C:\Users\Mike Slinn\.ivy2\cache\org.scala-tools\scala-stm_2.9.1\srcs\scala-stm_2.9.1-0.5-SNAPSHOT-sources.jar" kind="lib"></classpathentry>
-  <classpathentry path="C:\Users\Mike Slinn\.ivy2\cache\org.scalatest\scalatest_2.9.1\jars\scalatest_2.9.1-1.6.3-SNAPSHOT.jar" sourcepath="C:\Users\Mike Slinn\.ivy2\cache\org.scalatest\scalatest_2.9.1\srcs\scalatest_2.9.1-1.6.3-SNAPSHOT-sources.jar" kind="lib"></classpathentry>
+  <classpathentry path="C:\Users\Mike Slinn\.ivy2\cache\com.typesafe.akka\akka-actor\jars\akka-actor-2.0-20111223-000607.jar" kind="lib"></classpathentry>
+  <classpathentry path="C:\Users\Mike Slinn\.ivy2\cache\org.scala-tools\scala-stm_2.9.1\jars\scala-stm_2.9.1-0.5-SNAPSHOT.jar" kind="lib"></classpathentry>
+  <classpathentry path="C:\Users\Mike Slinn\.ivy2\cache\org.scalatest\scalatest_2.9.1\jars\scalatest_2.9.1-1.6.3-SNAPSHOT.jar" kind="lib"></classpathentry>
   <classpathentry path="org.scala-ide.sdt.launching.SCALA_CONTAINER" kind="con"></classpathentry>
   <classpathentry path="org.eclipse.jdt.launching.JRE_CONTAINER" kind="con"></classpathentry>
   <classpathentry path="target\scala-2.9.1\classes" kind="output"></classpathentry>

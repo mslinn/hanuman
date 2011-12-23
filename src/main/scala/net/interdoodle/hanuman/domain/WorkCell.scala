@@ -14,7 +14,7 @@ class WorkCell[C <: Critic](val document:String, val letterProbability:LetterPro
   //self.lifeCycle = Permanent // TODO what is counterpart for Akka 2?
 
   private val critic = criticFactory()
-  critic.self = self
+  critic.contextOption = Option(context)
   critic.document = document
 
   private val monkey = new Monkey(letterProbability)

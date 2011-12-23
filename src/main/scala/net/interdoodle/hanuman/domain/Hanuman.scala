@@ -24,7 +24,7 @@ class Hanuman extends Actor {
     case DocumentMatch(simulationId, startIndex) =>
       log.debug("Hanuman: Simulation completed with a DocumentMatch (hooray!)")
       val simulationStatus = simulationStatuses.get(simulationId)
-      self.sender ! simulationStatus // signal completion
+      context.sender ! simulationStatus // signal completion
       simulationSupervisors.get(simulationId) match {
         case Some(simulationSupervisorRef) => simulationSupervisorRef ! Stop
         case None =>
@@ -33,7 +33,7 @@ class Hanuman extends Actor {
 
     case GetSimulationStatus(simulationId) =>
       log.debug("Hanuman was requested to provide status for simulation " + simulationId)
-      self.sender ! simulationStatuses.get(simulationId)
+      context.sender ! simulationStatuses.get(simulationId)
 
     case NewSimulation(simulationId, workCellsPerVisor, maxTicks, document) =>
       log.debug("Hanuman was requested create new simulation " + simulationId)

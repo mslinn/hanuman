@@ -2,6 +2,7 @@ package net.interdoodle.hanuman
 
 import akka.actor.{Actor, ActorRef, ActorSystem, Props}
 import akka.dispatch.Await
+import akka.event.Logging
 import akka.util.Timeout
 import collection.mutable.HashSet
 import java.util.UUID
@@ -20,6 +21,7 @@ import blueeyes.json.Printer
 
 import domain.types._
 import domain.Hanuman
+import akka.event.Logging._
 
 
 /** BlueEyes service handler for Hanuman requests.
@@ -28,6 +30,7 @@ trait HanumanService extends BlueEyesServiceBuilder
     with HttpRequestCombinators
     with BijectionsChunkString
     with BijectionsChunkJson {
+  private val log = Logging(context.system, this)
   private val contentUrl = System.getenv("CONTENT_URL")
   private val system = ActorSystem("HanumanService")
   private val hanumanRefOption:Option[ActorRef] = Some(system.actorOf(Props[Hanuman]))
@@ -83,20 +86,20 @@ trait HanumanService extends BlueEyesServiceBuilder
     self.dispatcher = EventHandler.EventHandlerDispatcher
 
     def receive = {
-      case EventHandler.Error(cause, instance, message) =>
-        EventHandler.error(this, instance.toString + "\n" + message.toString + "\n" + cause.toString)
+      case Logging.Error(cause, instance, message) =>
+        log.error(this, instance.toString + "\n" + message.toString + "\n" + cause.toString)
 
-      case EventHandler.Warning(instance, message) =>
-        EventHandler.error(this, instance.toString + "\n" + message.toString)
+      case Logging.Warning(instance, message) =>
+        log.error(this, instance.toString + "\n" + message.toString)
 
-//      case EventHandler.Info(instance, message) =>
-//        EventHandler.info(this, instance.toString + "\n" + message.toString)
+//      case Logging.Info(instance, message) =>
+//        log.info(this, instance.toString + "\n" + message.toString)
 
-      case EventHandler.Debug(instance, message) =>
-        EventHandler.debug(this, instance.toString + "\n" + message.toString)
+      case Logging.Debug(instance, message) =>
+        log.debug(this, instance.toString + "\n" + message.toString)
 
       case SimulationStopped(simulationID) =>
-        EventHandler.info(this, "Notify client that simulation " + simulationID + " is done")
+        log.info(this, "Notify client that simulation " + simulationID + " is done")
 
       case _ =>
         // ignore
