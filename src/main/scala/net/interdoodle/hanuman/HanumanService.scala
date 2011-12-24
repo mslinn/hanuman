@@ -104,7 +104,7 @@ trait HanumanService extends BlueEyesServiceBuilder
       case _ =>
         // ignore
     }
-  }))
+  })))
 
 
   private def reqVersion[T, S](log:Logger) = {
