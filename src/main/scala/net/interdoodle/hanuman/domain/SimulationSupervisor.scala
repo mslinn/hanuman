@@ -1,7 +1,7 @@
 package net.interdoodle.hanuman.domain
 
-import akka.actor.{Actor, ActorRef, ActorSystem, Props}
-import akka.config.Supervision.{OneForOneStrategy, Permanent}
+import akka.actor.{Actor, ActorRef, ActorSystem, OneForOneStrategy, Props}
+import akka.actor.FaultHandlingStrategy._
 import akka.event.Logging
 import net.interdoodle.hanuman.message._
 import scala.collection.mutable.HashSet
@@ -28,7 +28,13 @@ class SimulationSupervisor(val simulationId:String,
   letterProbability.computeValues()
 
   //self.lifeCycle = Permanent // TODO what is counterpart for Akka 2?
-  self.faultHandler = OneForOneStrategy(List(classOf[Throwable]), 5, 5000)
+  
+  private val workCellStrategy = OneForOneStrategy({
+      case _: ArithmeticException      => Restart
+      case _: NullPointerException     => Restart
+      case _: IllegalArgumentException => Stop
+      case _: Exception                => Escalate
+  }: Decider, maxNrOfRetries = Some(10), withinTimeRange = Some(60000))
 
   private var running = false
 
@@ -82,8 +88,8 @@ class SimulationSupervisor(val simulationId:String,
   }
 
   def receive = {
-    case Stop =>
-      log.debug("SimulationSupervisor received Stop message")
+    case StopMsg =>
+      log.debug("SimulationSupervisor received StopMsg")
       running = false
       stopWorkCells
 
