@@ -17,9 +17,9 @@ resolvers ++= Seq(
 )
 
 libraryDependencies ++= Seq(
-  "com.reportgrid"           %% "blueeyes"                 % "0.4.26"              % "compile" withSources(),
-  "org.scalatest"            %% "scalatest"                % "latest.integration"  % "test"    withSources(),
-  "org.scala-tools.time"     %% "time"                     % "latest.integration"  % "compile",
-  "com.typesafe.akka"        %  "akka-actor"               % "latest.milestone"    % "compile" withSources(),
-  "org.scala-tools"          %% "scala-stm"                % "0.5-SNAPSHOT"        % "compile" withSources()
+  "com.reportgrid"       %% "blueeyes"   % "0.4.26"             % "compile" withSources(),
+  "org.scalatest"        %% "scalatest"  % "latest.integration" % "test"    withSources(),
+  "org.scala-tools.time" %% "time"       % "latest.integration" % "compile",
+  "com.typesafe.akka"    %  "akka-actor" % "latest.milestone"   % "compile" withSources(),
+  "org.scala-tools"      %% "scala-stm"  % "0.5-SNAPSHOT"       % "compile" withSources()
 )
