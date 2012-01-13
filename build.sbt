@@ -1,3 +1,6 @@
+// see https://github.com/sbt/sbt-assembly
+import AssemblyKeys._ // put this at the top of the file
+
 name := "Hanuman"
 
 version := "0.1"
@@ -5,6 +8,8 @@ version := "0.1"
 scalaVersion := "2.9.1"
 
 scalacOptions ++= Seq("-deprecation")
+
+seq(assemblySettings: _*)
 
 resolvers ++= Seq(
   "Typesafe Snapshots"    at "http://repo.typesafe.com/typesafe/snapshots",
