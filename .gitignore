@@ -1,4 +1,5 @@
 .cache
+.settings/
 /server.conf
 /project/boot
 /project/project

@@ -9,8 +9,6 @@ scalaVersion := "2.9.1"
 
 scalacOptions ++= Seq("-deprecation")
 
-seq(assemblySettings: _*)
-
 resolvers ++= Seq(
   "Typesafe Snapshots"    at "http://repo.typesafe.com/typesafe/snapshots",
   "Typesafe Releases"     at "http://repo.typesafe.com/typesafe/releases",
@@ -28,3 +26,5 @@ libraryDependencies ++= Seq(
   "com.typesafe.akka"    %  "akka-actor" % "latest.milestone"   % "compile" withSources(),
   "org.scala-tools"      %% "scala-stm"  % "0.5-SNAPSHOT"       % "compile" withSources()
 )
+
+seq(assemblySettings: _*)
