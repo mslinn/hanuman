@@ -104,13 +104,13 @@ Run Clients Against Local or Remote Service Instances
 or a remote service instance at a specified URL. Sample usages:
 
         ./test
-        ./test http://hollow-winter-3011.herokuapp.com
+        ./test http://scaluman.herokuapp.com
 
 
 Run on Heroku
 -------------
 
-Mike Slinn has deployed the app to http://hollow-winter-3011.herokuapp.com/
+Mike Slinn has deployed the app to http://scaluman.herokuapp.com/
 
 You can deploy it to your own Heroku app instance this way:
 
@@ -129,9 +129,9 @@ You can deploy it to your own Heroku app instance this way:
         heroku create --stack cedar
 
 6. Add your Heroku app instance as a remote git repository. 
-Substitute your Heroku app instance for ````hollow-winter-3011````:
+Substitute your Heroku app instance for ````scaluman````:
 
-        git remote add heroku git@heroku.com:hollow-winter-3011.git
+        git remote add heroku git@heroku.com:scaluman.git
 
 7. Set up a Heroku environment variable called ````CONTENT_URL```` and point it to your content delivery network.
 See the [Heroku docs](http://devcenter.heroku.com/articles/config-vars)
