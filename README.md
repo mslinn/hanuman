@@ -1,6 +1,11 @@
 Hanuman - Scala / Akka / BlueEyes / sbt demo
 ============================================
 
+This is an old project, using an ancient version of Scala, Akka and a web framework that is not longer used.
+I provide a modern version in the [Introduction to Actors](http://scalacourses.com/student/showLecture/91) lecture of the [Introduction to Scala](http://scalacourses.com/showCourse/45) course at [ScalaCourses.com](http://getscala.com).
+
+---
+
 This project demonstrates the [BlueEyes](https://github.com/jdegoes/blueeyes) Scala framework,
 Akka ````Actor````s and ````Ref````s; it can be run on any computer with Java installed, including
 [Heroku](https://api.heroku.com/myapps/strong-galaxy-4334).
